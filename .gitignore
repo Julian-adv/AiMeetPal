@@ -56,3 +56,5 @@ var/
 *.egg
 venv/
 .env
+
+*.pt
