@@ -54,6 +54,8 @@ class ImageGenerationRequest(BaseModel):
     negative_prompt: Optional[str] = None
     num_inference_steps: Optional[int] = 50
     guidance_scale: Optional[float] = 7.5
+    height: Optional[int] = 1216
+    width: Optional[int] = 832
 
 def image_to_base64(image: Image.Image) -> str:
     buffered = BytesIO()
@@ -79,12 +81,15 @@ async def chat(message: ChatMessage):
 @app.post("/api/generate-image")
 async def generate_image(request: ImageGenerationRequest):
     try:
+        print(request)
         # Generate the image
         image = pipe(
             prompt=request.prompt,
             negative_prompt=request.negative_prompt,
             num_inference_steps=request.num_inference_steps,
-            guidance_scale=request.guidance_scale
+            guidance_scale=request.guidance_scale,
+            height=request.height,
+            width=request.width
         ).images[0]
         
         # Convert the image to base64

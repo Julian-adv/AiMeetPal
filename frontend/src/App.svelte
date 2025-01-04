@@ -9,7 +9,12 @@
 
     loading = true
     error = null
-    generatedImage = null
+    // generatedImage = null
+
+    const guidance_scale = 4.5
+    const width = 1216
+    const height = 832
+    const prefix = 'score_9, score_8_up, score_7_up'
 
     try {
       const response = await fetch('http://localhost:5000/api/generate-image', {
@@ -17,11 +22,11 @@
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ prompt }),
+        body: JSON.stringify({ prompt: `${prefix}, ${prompt}`, guidance_scale, width, height }),
       })
 
       const data = await response.json()
-      
+
       if (!response.ok) {
         throw new Error(data.detail || 'Failed to generate image')
       }
@@ -37,7 +42,7 @@
 
 <main class="container">
   <h1>AiMeetPal Image Generator</h1>
-  
+
   <div class="input-section">
     <input
       type="text"
@@ -57,9 +62,7 @@
   {/if}
 
   {#if loading}
-    <div class="loading">
-      Generating your image... This may take a minute...
-    </div>
+    <div class="loading">Generating your image... This may take a minute...</div>
   {/if}
 
   {#if generatedImage}
@@ -100,7 +103,7 @@
   button {
     padding: 0.5rem 1rem;
     font-size: 1rem;
-    background-color: #4CAF50;
+    background-color: #4caf50;
     color: white;
     border: none;
     border-radius: 4px;
