@@ -1,171 +1,151 @@
 <script lang="ts">
-  interface Message {
-    role: 'user' | 'assistant' | 'error';
-    content: string;
-    image?: string;
-  }
+  let prompt = ''
+  let loading = false
+  let generatedImage: string | null = null
+  let error: string | null = null
 
-  let messages: Message[] = [];
-  let newMessage: string = '';
-  let selectedFile: File | null = null;
+  async function generateImage() {
+    if (!prompt.trim()) return
 
-  async function sendMessage(): Promise<void> {
-    if (!newMessage.trim()) return;
-
-    // 사용자 메시지 추가
-    messages = [...messages, { role: 'user', content: newMessage }];
-    const messageToSend = newMessage;
-    newMessage = '';
+    loading = true
+    error = null
+    generatedImage = null
 
     try {
-      const response = await fetch('http://localhost:5000/api/chat', {
+      const response = await fetch('http://localhost:5000/api/generate-image', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ message: messageToSend }),
-      });
+        body: JSON.stringify({ prompt }),
+      })
 
-      const data = await response.json();
-
-      // AI 응답 추가
-      messages = [...messages, { role: 'assistant', content: data.response }];
-    } catch (error) {
-      console.error('Error:', error);
-      messages = [...messages, { role: 'error', content: '오류가 발생했습니다.' }];
-    }
-  }
-
-  async function handleFileUpload(event: Event): Promise<void> {
-    const target = event.target;
-    if (!(target instanceof HTMLInputElement)) return;
-    const file = target.files?.[0];
-    if (!file) return;
-
-    const formData = new FormData();
-    formData.append('file', file);
-
-    try {
-      const response = await fetch('http://localhost:5000/api/upload', {
-        method: 'POST',
-        body: formData,
-      });
-
-      const data = await response.json();
-      if (response.ok) {
-        messages = [
-          ...messages,
-          {
-            role: 'user',
-            content: '이미지 업로드: ' + file.name,
-            image: URL.createObjectURL(file),
-          },
-        ];
+      const data = await response.json()
+      
+      if (!response.ok) {
+        throw new Error(data.detail || 'Failed to generate image')
       }
-    } catch (error) {
-      console.error('Error:', error);
+
+      generatedImage = data.image
+    } catch (e) {
+      error = e instanceof Error ? e.message : 'An error occurred'
+    } finally {
+      loading = false
     }
   }
 </script>
 
-<main>
-  <div class="chat-container">
-    <div class="messages">
-      {#each messages as message}
-        <div class="message {message.role}">
-          {#if message.image}
-            <img src={message.image} alt="Uploaded" />
-          {/if}
-          <p>{message.content}</p>
-        </div>
-      {/each}
-    </div>
-
-    <div class="input-container">
-      <input type="file" accept="image/*" on:change={handleFileUpload} />
-      <input
-        type="text"
-        bind:value={newMessage}
-        placeholder="메시지를 입력하세요..."
-        on:keydown={(e) => e.key === 'Enter' && sendMessage()}
-      />
-      <button on:click={sendMessage}>전송</button>
-    </div>
+<main class="container">
+  <h1>AiMeetPal Image Generator</h1>
+  
+  <div class="input-section">
+    <input
+      type="text"
+      bind:value={prompt}
+      placeholder="Enter your prompt here..."
+      disabled={loading}
+    />
+    <button on:click={generateImage} disabled={loading || !prompt.trim()}>
+      {loading ? 'Generating...' : 'Generate Image'}
+    </button>
   </div>
+
+  {#if error}
+    <div class="error">
+      {error}
+    </div>
+  {/if}
+
+  {#if loading}
+    <div class="loading">
+      Generating your image... This may take a minute...
+    </div>
+  {/if}
+
+  {#if generatedImage}
+    <div class="image-container">
+      <img src={generatedImage} alt={prompt} />
+      <p class="prompt">Prompt: {prompt}</p>
+    </div>
+  {/if}
 </main>
 
 <style>
-  .chat-container {
+  .container {
     max-width: 800px;
     margin: 0 auto;
-    padding: 20px;
-    height: 100vh;
+    padding: 2rem;
+  }
+
+  h1 {
+    text-align: center;
+    color: #333;
+    margin-bottom: 2rem;
+  }
+
+  .input-section {
     display: flex;
-    flex-direction: column;
+    gap: 1rem;
+    margin-bottom: 2rem;
   }
 
-  .messages {
-    flex-grow: 1;
-    overflow-y: auto;
-    margin-bottom: 20px;
-    padding: 10px;
-    background: #f5f5f5;
-    border-radius: 8px;
-  }
-
-  .message {
-    margin: 10px 0;
-    padding: 10px;
-    border-radius: 8px;
-  }
-
-  .message.user {
-    background: #e3f2fd;
-    margin-left: 20%;
-  }
-
-  .message.assistant {
-    background: #f5f5f5;
-    margin-right: 20%;
-  }
-
-  .message.error {
-    background: #ffebee;
-    color: #c62828;
-  }
-
-  .message img {
-    max-width: 200px;
-    border-radius: 4px;
-    margin-bottom: 10px;
-  }
-
-  .input-container {
-    display: flex;
-    gap: 10px;
-    padding: 10px;
-    background: white;
-    border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  }
-
-  input[type='text'] {
-    flex-grow: 1;
-    padding: 10px;
-    border: 1px solid #ddd;
+  input {
+    flex: 1;
+    padding: 0.5rem;
+    font-size: 1rem;
+    border: 1px solid #ccc;
     border-radius: 4px;
   }
 
   button {
-    padding: 10px 20px;
-    background: #2196f3;
+    padding: 0.5rem 1rem;
+    font-size: 1rem;
+    background-color: #4CAF50;
     color: white;
     border: none;
     border-radius: 4px;
     cursor: pointer;
+    transition: background-color 0.3s;
   }
 
-  button:hover {
-    background: #1976d2;
+  button:hover:not(:disabled) {
+    background-color: #45a049;
+  }
+
+  button:disabled {
+    background-color: #cccccc;
+    cursor: not-allowed;
+  }
+
+  .error {
+    color: #ff0000;
+    padding: 1rem;
+    background-color: #ffebee;
+    border-radius: 4px;
+    margin-bottom: 1rem;
+  }
+
+  .loading {
+    text-align: center;
+    color: #666;
+    margin: 2rem 0;
+  }
+
+  .image-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  .image-container img {
+    max-width: 100%;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  }
+
+  .prompt {
+    color: #666;
+    font-style: italic;
   }
 </style>
