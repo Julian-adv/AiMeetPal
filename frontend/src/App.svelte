@@ -62,10 +62,6 @@
     </div>
   {/if}
 
-  {#if loading}
-    <div class="loading">Generating your image... This may take a minute...</div>
-  {/if}
-
   {#if generatedImage}
     <div class="image-container">
       <img src={generatedImage} alt={prompt} />

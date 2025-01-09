@@ -1,9 +1,7 @@
-from fastapi import FastAPI, UploadFile, File, Form, HTTPException
+from fastapi import FastAPI, UploadFile, File, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 import os
-import torch
 import random
 
 os.environ["TF_ENABLE_ONEDNN_OPTS"] = "0"
@@ -12,11 +10,6 @@ from dotenv import load_dotenv
 # from openai import OpenAI
 from typing import Optional
 import shutil
-from diffusers import (
-    StableDiffusionXLPipeline,
-    StableDiffusionXLImg2ImgPipeline,
-    AutoencoderKL,
-)
 from PIL import Image
 from impact.face_detailer import FaceDetailer, tensor2pil
 from impact.subcore import UltraBBoxDetector
@@ -25,6 +18,7 @@ from io import BytesIO
 from ultralytics import YOLO
 import comfy.sd
 from impact.utils import pil2tensor
+from comfyui.nodes import KSampler, EmptyLatentImage, VAEDecodeTiled
 
 # 1girl,maid,large breasts,christian louboutin highheels, garter straps,stockings,collar,kpop idol,long legs,narrow waist,long hair,ass,cameltoe,bent over
 
@@ -46,22 +40,8 @@ app.add_middleware(
 
 # Initialize models
 model_name = "phonyponypepperoni_pppv5"
-model_path = f"d:\\ComfyUI_windows_portable\\ComfyUI\\models\\checkpoints\\{model_name}.safetensors"
 ckpt_path = f"d:\\ComfyUI_windows_portable\\ComfyUI\\models\\checkpoints\\{model_name}.safetensors"
 embedding_path = f"d:\\ComfyUI_windows_portable\\ComfyUI\\models\\embeddings"
-
-# Main pipeline
-pipe = StableDiffusionXLPipeline.from_single_file(
-    model_path, torch_dtype=torch.float16
-).to("cuda")
-
-# Face enhancement pipeline
-face_pipe = StableDiffusionXLImg2ImgPipeline.from_single_file(
-    model_path, torch_dtype=torch.float16
-).to("cuda")
-
-# Get CLIP model from pipeline
-clip_model = face_pipe.text_encoder
 
 # Initialize face detection
 face_detector = UltraBBoxDetector(YOLO("face_yolov8m.pt"))  # Use the base model
@@ -120,23 +100,16 @@ async def chat(message: ChatMessage):
 check_point = None
 clip = None
 vae = None
+empty_latent_image = None
+ksampler = None
+vae_decoder = None
 detailer = None
-
 
 @app.post("/api/generate-image")
 async def generate_image(request: ImageGenerationRequest):
     try:
         print(request)
         negative_prompt = request.negative_prompt if request.negative_prompt else ""
-        # Generate the initial image
-        image = pipe(
-            prompt=request.prompt,
-            negative_prompt=negative_prompt,
-            num_inference_steps=request.num_inference_steps,
-            guidance_scale=request.guidance_scale,
-            height=request.height,
-            width=request.width,
-        ).images[0]
 
         global check_point
         global clip
@@ -144,7 +117,18 @@ async def generate_image(request: ImageGenerationRequest):
         if not check_point:
             check_point,clip,vae,_ = comfy.sd.load_checkpoint_guess_config(ckpt_path, output_vae=True, output_clip=True, embedding_directory=embedding_path)
 
-        # Initialize FaceDetailer and VAE
+        global empty_latent_image
+        if not empty_latent_image:
+            empty_latent_image = EmptyLatentImage()
+
+        global ksampler
+        if not ksampler:
+            ksampler = KSampler()
+
+        global vae_decoder
+        if not vae_decoder:
+            vae_decoder = VAEDecodeTiled()
+
         global detailer
         if not detailer:
             detailer = FaceDetailer()
@@ -154,9 +138,13 @@ async def generate_image(request: ImageGenerationRequest):
         negative = encode(clip, negative_prompt)
 
         seed = random.randint(1, 2147483647)  # 1 to 2^31-1 (max 32-bit signed integer)
+
+        latent_image = empty_latent_image.generate(request.width, request.height)
+        latent_image = ksampler.sample(check_point, seed, 50, 4.5, "dpmpp_2m_sde", "karras", positive[0], negative[0], latent_image[0], denoise=1.0)
+        vae_decoded_image = vae_decoder.decode(vae, latent_image[0], 512)
         # Process image with FaceDetailer
         enhanced_image = detailer.doit(
-            pil2tensor(image),
+            vae_decoded_image[0],
             check_point,
             clip,
             vae,
