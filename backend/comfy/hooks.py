@@ -14,7 +14,7 @@ if TYPE_CHECKING:
 import comfy.lora
 import comfy.model_management
 import comfy.patcher_extension
-from node_helpers import conditioning_set_values
+from comfyui.node_helpers import conditioning_set_values
 
 class EnumHookMode(enum.Enum):
     MinVram = "minvram"
