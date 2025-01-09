@@ -12,9 +12,10 @@
     // generatedImage = null
 
     const guidance_scale = 4.5
-    const width = 1216
-    const height = 832
+    const width = 832 * 1
+    const height = 1216 * 1
     const prefix = 'score_9, score_8_up, score_7_up'
+    const face_steps = 20
 
     try {
       const response = await fetch('http://localhost:5000/api/generate-image', {
@@ -22,7 +23,7 @@
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ prompt: `${prefix}, ${prompt}`, guidance_scale, width, height }),
+        body: JSON.stringify({ prompt: `${prefix}, ${prompt}`, guidance_scale, width, height, face_steps }),
       })
 
       const data = await response.json()
@@ -142,7 +143,7 @@
   }
 
   .image-container img {
-    max-width: 100%;
+    max-width: 700px;
     border-radius: 8px;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   }
