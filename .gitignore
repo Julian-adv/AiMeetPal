@@ -58,3 +58,4 @@ venv/
 .env
 
 *.pt
+backend/settings.json

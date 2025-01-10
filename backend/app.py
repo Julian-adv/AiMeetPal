@@ -3,6 +3,9 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 import os
 import random
+import httpx
+import json
+from typing import Optional, List, Union
 
 os.environ["TF_ENABLE_ONEDNN_OPTS"] = "0"
 # os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'  # hide tensorflow warnings
@@ -77,18 +80,100 @@ def encode(clip, text):
     return (clip.encode_from_tokens_scheduled(tokens), )
 
 
+settings = None
+
 @app.post("/api/chat")
 async def chat(message: ChatMessage):
+    global settings
+    if settings is None:
+        try:
+            with open("settings.json", "r") as f:
+                settings = json.load(f)
+        except FileNotFoundError:
+            settings = {
+                "model": "anthracite-org-magnum-v4-72b-FP8-Dynamic",
+                "max_new_tokens": 512,
+                "max_tokens": 512,
+                "temperature": 1,
+                "top_p": 1,
+                "typical_p": 1,
+                "typical": 1,
+                "infermaticAiApiKey": "your_api_key_here"
+            }
+
     try:
-        # Since actual OpenAI API call is commented out, return a dummy response
-        # response = client.chat.completions.create(
-        #     model="gpt-3.5-turbo",
-        #     messages=[
-        #         {"role": "user", "content": message.message}
-        #     ]
-        # )
-        # return {"response": response.choices[0].message.content}
-        return {"response": f"Echo: {message.message}"}
+        payload = {
+            "prompt": message.message,
+            "model": settings["model"],
+            "max_new_tokens": settings["max_new_tokens"],
+            "max_tokens": settings["max_tokens"],
+            "temperature": settings["temperature"],
+            "top_p": settings["top_p"],
+            "typical_p": settings["typical_p"],
+            "typical": settings["typical"],
+            "sampler_seed": -1,
+            "min_p": 0.02,
+            "repetition_penalty": 1,
+            "frequency_penalty": 0,
+            "presence_penalty": 0,
+            "top_k": -1,
+            "skew": 0,
+            "min_tokens": 0,
+            "add_bos_token": True,
+            "smoothing_factor": 0,
+            "smoothing_curve": 1,
+            "dry_allowed_length": 2,
+            "dry_multiplier": 0.75,
+            "dry_base": 1.75,
+            "dry_sequence_breakers": '["\\n",":","\\"","*"]',
+            "dry_penalty_last_n": 0,
+            "max_tokens_second": 0,
+            "stopping_strings": [
+                "\nJulien:",
+                "\nStellar:",
+                "<|eot_id|>",
+                "<|start_header_id|>writer character: Julien<|end_header_id|>",
+                "<|start_header_id|>writer character: Jessica<|end_header_id|>"
+            ],
+            "stop": [
+                "\nJulien:",
+                "\nStellar:",
+                "<|eot_id|>",
+                "<|start_header_id|>writer character: Julien<|end_header_id|>",
+                "<|start_header_id|>writer character: Jessica<|end_header_id|>"
+            ],
+            "truncation_length": 8192,
+            "ban_eos_token": False,
+            "skip_special_tokens": True,
+            "top_a": 0,
+            "tfs": 1,
+            "mirostat_mode": 0,
+            "mirostat_tau": 5,
+            "mirostat_eta": 0.1,
+            "custom_token_bans": "",
+            "banned_strings": [],
+            "api_type": "infermaticai",
+            "api_server": "https://api.totalgpt.ai",
+            "xtc_threshold": 0.1,
+            "xtc_probability": 0.5,
+            "nsigma": 0,
+            "n": 1,
+            "ignore_eos": False,
+            "spaces_between_special_tokens": True,
+            "stream": True
+        }
+        
+        async with httpx.AsyncClient() as client:
+            response = await client.post(
+                "https://api.totalgpt.ai/v1/completions",
+                json=payload,
+                headers={
+                    "Authorization": 'Bearer ' + settings["infermaticAiApiKey"],
+                    "Content-Type": "application/json"
+                }
+            )
+            response.raise_for_status()
+            return response.json()
     except Exception as e:
         import traceback
         print(f"Error occurred: {str(e)}")
