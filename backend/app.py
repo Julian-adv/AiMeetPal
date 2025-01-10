@@ -3,6 +3,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 import httpx
 from pydantic import BaseModel
+from typing import List, Optional
 import json
 import os
 import random
@@ -17,7 +18,6 @@ import shutil
 import uvicorn
 from ultralytics import YOLO
 from dotenv import load_dotenv
-from typing import Optional
 
 os.environ["TF_ENABLE_ONEDNN_OPTS"] = "0"
 # os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'  # hide tensorflow warnings
@@ -50,9 +50,13 @@ if not os.path.exists(UPLOAD_FOLDER):
     os.makedirs(UPLOAD_FOLDER)
 
 
-class ChatMessage(BaseModel):
-    prompt: str
+class ChatEntry(BaseModel):
+    id: int
+    speaker: str
+    content: str
 
+class ChatMessage(BaseModel):
+    entries: List[ChatEntry]
 
 class ImageGenerationRequest(BaseModel):
     prompt: str
@@ -100,7 +104,7 @@ async def chat(message: ChatMessage):
     async def generate():
         async with httpx.AsyncClient() as client:
 
-            prompt = ('<|start_header_id|>system<|end_header_id|>\n' +
+            system_prompt = ('<|start_header_id|>system<|end_header_id|>\n' +
                 '\n' +
                 'Develop the plot slowly, always stay in character. Describe all actions in full, elaborate, explicit, graphic, and vivid detail. Mention all relevant sensory perceptions. Keep the story immersive and engaging.\n' +
                 '\n' +
@@ -126,14 +130,14 @@ async def chat(message: ChatMessage):
                 '<|start_header_id|>user<|end_header_id|>\n' +
                 '\n' +
                 'Start the role-play between Stellar and Julien.\n' +
-                '<|eot_id|>\n' +
-                '<|start_header_id|>writer character: Stellar<|end_header_id|>\n' +
-                '\n' +
-                'Good morning. Master. Jessica, your new maid candidate, has arrived and is waiting for you. Shall I bring her here?<|eot_id|>\n' +
-                '<|start_header_id|>writer character: Julien<|end_header_id|>\n' +
-                '\n' +
-                f'{message.prompt}<|eot_id|>\n')
+                '<|eot_id|>\n'
+                )
 
+            prompt = system_prompt
+            for entry in message.entries:
+                prompt += f'<|start_header_id|>writer character: {entry.speaker}<|end_header_id|>\n\n{entry.content}<|eot_id|>\n'
+
+            print(prompt)
             payload = {
                 "prompt": prompt,
                 "model": settings["model"],

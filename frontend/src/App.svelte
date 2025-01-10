@@ -13,7 +13,12 @@
     content: '',
     image: null,
   }
-  let storyEntries: StoryEntries = []
+  let storyEntries: StoryEntries = [{
+    id: nextId++,
+    speaker: 'Stellar',
+    content: 'Good morning. Master. Jessica, your new maid candidate, has arrived and is waiting for you. Shall I bring her here?',
+    image: null,
+  }]
   let chatLoading = false
   let error: string | null = null
 
@@ -78,13 +83,19 @@
     }
   }
 
-  async function send_chat(received: (text: string) => void) {
+  async function send_chat(entries: StoryEntries, received: (text: string) => void) {
+    const chatEntries = entries.map(({ id, speaker, content }) => ({
+      id,
+      speaker,
+      content,
+    }))
+
     const response = await fetch('http://localhost:5000/api/chat', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ prompt: chatInput }),
+      body: JSON.stringify({ entries: chatEntries }),
     })
 
     if (!response.ok) {
@@ -157,7 +168,8 @@
           image: null,
         },
       ]
-      await send_chat(received_text)
+      chatInput = ''
+      await send_chat(storyEntries, received_text)
       storyEntries = [...storyEntries, { ...currentEntry, id: nextId++ }]
       currentEntry = {
         id: 0,
@@ -165,7 +177,6 @@
         content: '',
         image: null,
       }
-      chatInput = ''
     } catch (e: unknown) {
       error = e instanceof Error ? e.message : 'An unknown error occurred'
     } finally {

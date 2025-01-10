@@ -1,14 +1,16 @@
 <script lang="ts">
   import type { StoryEntry } from '../types/story'
-  
+
   export let entry: StoryEntry
 </script>
 
 <div class="story-scene">
-  {#if entry.speaker}
-    <span class="speaker">{entry.speaker}:</span>
-  {/if}
-  <div class="content">{entry.content}</div>
+  <div class="content">
+    {#if entry.speaker}
+      <span class="speaker">{entry.speaker}:</span>
+    {/if}
+    {entry.content}
+  </div>
   {#if entry.image}
     <div class="scene-image">
       <img src={entry.image} alt="Scene visualization" />
