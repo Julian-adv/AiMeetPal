@@ -230,12 +230,15 @@
     {#if chatLoading}
       <p>Loading...</p>
     {/if}
-    {#each storyEntries as entry (entry.id)}
-      <StoryScene {entry} />
-    {/each}
-    {#if currentEntry.content}
-      <StoryScene entry={currentEntry} />
-    {/if}
+    <div class="story">
+      {#each storyEntries as entry (entry.id)}
+        <StoryScene {entry} showImage={entry.speaker !== user_name} />
+      {/each}
+
+      {#if currentEntry.content}
+        <StoryScene entry={currentEntry} showImage={currentEntry.speaker !== user_name} />
+      {/if}
+    </div>
 
     <div class="chat-input-container">
       <span class="user-name">{user_name}:</span>
