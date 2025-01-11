@@ -2,18 +2,21 @@
   import type { StoryEntry } from '../types/story'
 
   export let entry: StoryEntry
-  export let showImage = true
 </script>
 
 <div class="story-scene">
-  {#if showImage}
+  {#if entry.image}
     <div class="scene-image">
-      {#if entry.image}
-        <img src={entry.image} alt="Scene visualization" />
-      {:else}
+      {#if entry.image === 'wait_prompt' || entry.image === 'wait_image'}
         <div class="image-placeholder">
-          <div class="spinner"></div>
+          {#if entry.image === 'wait_prompt'}
+            <div class="spinner_square"></div>
+          {:else}
+            <div class="spinner_circle"></div>
+          {/if}
         </div>
+      {:else}
+        <img src={entry.image} alt="Scene visualization" />
       {/if}
     </div>
   {/if}
@@ -53,13 +56,21 @@
     justify-content: center;
   }
 
-  .spinner {
+  .spinner_square {
     width: 32px;
     height: 32px;
+    animation: spin 1s linear infinite;
+    border-radius: 0;
+    border: 4px solid #bfc9eb;
+  }
+
+  .spinner_circle {
+    width: 32px;
+    height: 32px;
+    animation: spin 1s linear infinite;
     border: 4px solid #f3f3f3;
     border-top: 4px solid #bfc9eb;
     border-radius: 50%;
-    animation: spin 1s linear infinite;
   }
 
   @keyframes spin {

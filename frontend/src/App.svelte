@@ -137,6 +137,18 @@
     }
   }
 
+  async function scene_to_prompt(text: string) {
+    const response = await fetch('http://localhost:5000/api/scene-to-prompt', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ content: text }),
+    })
+    const data = await response.json()
+    return data.prompt
+  }
+
   async function generate_image(text: string) {
     const response = await fetch('http://localhost:5000/api/generate-image', {
       method: 'POST',
@@ -155,6 +167,18 @@
     return data.image
   }
 
+  async function generate_last_image() {
+    const last_index = storyEntries.length - 1
+    storyEntries[last_index].image = 'wait_prompt'
+    let prompt = await scene_to_prompt(storyEntries[last_index].content)
+    if (!prompt) {
+      prompt = storyEntries[last_index].content
+    }
+    storyEntries[last_index].image = 'wait_image'
+    const prefix = 'score_9, score_8_up, score_7_up'
+    storyEntries[last_index].image = await generate_image(`${prefix}, ${prompt}`)
+  }
+
   async function handleChat(event: KeyboardEvent) {
     if (event.key !== 'Enter') return
     if (!chatInputValue.trim()) return
@@ -164,7 +188,7 @@
       id: 0,
       speaker: '',
       content: '',
-      image: null,
+      image: 'wait_prompt',
     }
     error = null
 
@@ -185,11 +209,9 @@
         id: 0,
         speaker: '',
         content: '',
-        image: null,
+        image: 'wait_prompt',
       }
-      storyEntries[storyEntries.length - 1].image = await generate_image(
-        storyEntries[storyEntries.length - 1].content
-      )
+      await generate_last_image()
     } catch (e: unknown) {
       error = e instanceof Error ? e.message : 'An unknown error occurred'
     } finally {
@@ -198,7 +220,7 @@
   }
 
   onMount(async () => {
-    storyEntries[0].image = await generate_image(storyEntries[0].content)
+    await generate_last_image()
     chatInputElement?.focus()
   })
 </script>
@@ -232,11 +254,11 @@
     {/if}
     <div class="story">
       {#each storyEntries as entry (entry.id)}
-        <StoryScene {entry} showImage={entry.speaker !== user_name} />
+        <StoryScene {entry} />
       {/each}
 
       {#if currentEntry.content}
-        <StoryScene entry={currentEntry} showImage={currentEntry.speaker !== user_name} />
+        <StoryScene entry={currentEntry} />
       {/if}
     </div>
 
