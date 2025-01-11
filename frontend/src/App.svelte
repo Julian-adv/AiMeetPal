@@ -1,26 +1,32 @@
 <script lang="ts">
   import StoryScene from './components/StoryScene.svelte'
   import type { StoryEntry, StoryEntries } from './types/story'
+  import { onMount } from 'svelte'
 
   let nextId = 1
   let prompt = ''
   let loading = false
   let generatedImage: string | null = null
-  let chatInput = ''
+  let chatInputValue = ''
   let currentEntry: StoryEntry = {
     id: 0,
     speaker: '',
     content: '',
     image: null,
   }
-  let storyEntries: StoryEntries = [{
-    id: nextId++,
-    speaker: 'Stellar',
-    content: 'Good morning. Master. Jessica, your new maid candidate, has arrived and is waiting for you. Shall I bring her here?',
-    image: null,
-  }]
+  let storyEntries: StoryEntries = [
+    {
+      id: nextId++,
+      speaker: 'Stellar',
+      content:
+        'Good morning. Master. Jessica, your new maid candidate, has arrived and is waiting for you. Shall I bring her here?',
+      image: null,
+    },
+  ]
   let chatLoading = false
   let error: string | null = null
+  let user_name = 'Julien'
+  let chatInputElement: HTMLInputElement
 
   async function generateImage() {
     if (!prompt.trim()) return
@@ -107,47 +113,51 @@
       throw new Error('Failed to get response reader')
     }
     const decoder = new TextDecoder()
-    let lastActivity = Date.now()
-    const TIMEOUT_MS = 10000 // 10 seconds timeout
 
-    try {
-      while (true) {
-        const { value, done } = await reader.read()
+    while (true) {
+      const { value, done } = await reader.read()
 
-        if (done) break
+      if (done) break
 
-        // Check for timeout
-        const now = Date.now()
-        if (now - lastActivity > TIMEOUT_MS) {
-          throw new Error('Stream timeout')
-        }
-        lastActivity = now
+      const chunk = decoder.decode(value)
+      const lines = chunk.split('\n')
 
-        const chunk = decoder.decode(value)
-        const lines = chunk.split('\n')
-
-        for (const line of lines) {
-          if (line.startsWith('data: ') && line.trim() !== 'data: ') {
-            try {
-              const data = JSON.parse(line.slice(6))
-              if (data.text) {
-                received(data.text)
-                lastActivity = Date.now() // Reset timeout on valid data
-              }
-            } catch (e) {
-              console.error('Failed to parse JSON:', e)
+      for (const line of lines) {
+        if (line.startsWith('data: ') && line.trim() !== 'data: ') {
+          try {
+            const data = JSON.parse(line.slice(6))
+            if (data.text) {
+              received(data.text)
             }
+          } catch (e) {
+            console.error('Failed to parse JSON:', e)
           }
         }
       }
-    } finally {
-      reader.cancel()
     }
+  }
+
+  async function generate_image(text: string) {
+    const response = await fetch('http://localhost:5000/api/generate-image', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        prompt: text,
+        guidance_scale: 4.5,
+        width: 832 * 1,
+        height: 1216 * 1,
+        face_steps: 20,
+      }),
+    })
+    const data = await response.json()
+    return data.image
   }
 
   async function handleChat(event: KeyboardEvent) {
     if (event.key !== 'Enter') return
-    if (!chatInput.trim()) return
+    if (!chatInputValue.trim()) return
 
     chatLoading = true
     currentEntry = {
@@ -164,11 +174,11 @@
         {
           id: nextId++,
           speaker: 'Julien',
-          content: chatInput,
+          content: chatInputValue,
           image: null,
         },
       ]
-      chatInput = ''
+      chatInputValue = ''
       await send_chat(storyEntries, received_text)
       storyEntries = [...storyEntries, { ...currentEntry, id: nextId++ }]
       currentEntry = {
@@ -177,16 +187,24 @@
         content: '',
         image: null,
       }
+      storyEntries[storyEntries.length - 1].image = await generate_image(
+        storyEntries[storyEntries.length - 1].content
+      )
     } catch (e: unknown) {
       error = e instanceof Error ? e.message : 'An unknown error occurred'
     } finally {
       chatLoading = false
     }
   }
+
+  onMount(async () => {
+    storyEntries[0].image = await generate_image(storyEntries[0].content)
+    chatInputElement?.focus()
+  })
 </script>
 
 <main class="container">
-  <h1>AiMeetPal Image Generator</h1>
+  <h1>AiMeetPal</h1>
 
   <div class="input-section">
     <textarea bind:value={prompt} placeholder="Enter your prompt here..."></textarea>
@@ -218,14 +236,18 @@
     {#if currentEntry.content}
       <StoryScene entry={currentEntry} />
     {/if}
-    <input
-      type="text"
-      bind:value={chatInput}
-      on:keydown={handleChat}
-      placeholder="Type your message and press Enter..."
-      disabled={chatLoading}
-      class="chat-input"
-    />
+
+    <div class="chat-input-container">
+      <span class="user-name">{user_name}:</span>
+      <input
+        bind:this={chatInputElement}
+        type="text"
+        bind:value={chatInputValue}
+        on:keydown={handleChat}
+        disabled={chatLoading}
+        class="chat-input"
+      />
+    </div>
   </div>
 </main>
 
@@ -308,12 +330,21 @@
     width: 100%;
   }
 
+  .chat-input-container {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .user-name {
+    font-weight: bold;
+  }
+
   .chat-input {
     width: 100%;
     padding: 0.5rem;
     font-size: 1rem;
     border: 1px solid #ccc;
     border-radius: 4px;
-    margin-bottom: 1rem;
   }
 </style>

@@ -5,17 +5,15 @@
 </script>
 
 <div class="story-scene">
-  <div class="content">
-    {#if entry.speaker}
-      <span class="speaker">{entry.speaker}:</span>
-    {/if}
-    {entry.content}
-  </div>
   {#if entry.image}
     <div class="scene-image">
       <img src={entry.image} alt="Scene visualization" />
     </div>
   {/if}
+  {#if entry.speaker}
+    <span class="speaker">{entry.speaker}:</span>
+  {/if}
+  {entry.content}
 </div>
 
 <style>
@@ -23,15 +21,13 @@
     text-align: left;
     margin: 1rem 0;
     white-space: pre-wrap;
-  }
-
-  .speaker {
-    font-weight: bold;
+    overflow: auto;
   }
 
   .scene-image {
-    margin-top: 1rem;
-    max-width: 100%;
+    float: left;
+    width: 384px;
+    margin: 0 1rem 0.5rem 0;
   }
 
   .scene-image img {
@@ -40,7 +36,7 @@
     border-radius: 8px;
   }
 
-  .content {
-    margin-top: 0.5rem;
+  .speaker {
+    font-weight: bold;
   }
 </style>
