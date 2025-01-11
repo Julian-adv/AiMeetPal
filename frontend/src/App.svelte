@@ -19,7 +19,7 @@
       id: nextId++,
       speaker: 'Stellar',
       content:
-        'Good morning. Master. Jessica, your new maid candidate, has arrived and is waiting for you. Shall I bring her here?',
+        'Good morning. Master. Stellar, your new maid candidate, has arrived and is waiting for you. Shall I bring her here?',
       image: null,
     },
   ]
@@ -27,6 +27,8 @@
   let error: string | null = null
   let user_name = 'Julien'
   let chatInputElement: HTMLInputElement
+
+  const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
 
   async function generateImage() {
     if (!prompt.trim()) return
@@ -170,6 +172,7 @@
   async function generate_last_image() {
     const last_index = storyEntries.length - 1
     storyEntries[last_index].image = 'wait_prompt'
+    await delay(500)
     let prompt = await scene_to_prompt(storyEntries[last_index].content)
     if (!prompt) {
       prompt = storyEntries[last_index].content
@@ -186,7 +189,7 @@
     chatLoading = true
     currentEntry = {
       id: 0,
-      speaker: '',
+      speaker: 'Stellar',
       content: '',
       image: 'wait_prompt',
     }
@@ -207,7 +210,7 @@
       storyEntries = [...storyEntries, { ...currentEntry, id: nextId++ }]
       currentEntry = {
         id: 0,
-        speaker: '',
+        speaker: 'Stellar',
         content: '',
         image: 'wait_prompt',
       }
