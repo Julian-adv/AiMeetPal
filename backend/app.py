@@ -143,18 +143,20 @@ def scene_to_prompt(scene: SceneContent):
     try:
         system_prompt = (
             '<|im_start|>system\n' +
-            'You are an expert at writing scene descriptions for Stable Diffusion image generation prompts.\n' +
-            'Given a scene description, create a concise list of English words or short phrases that best capture the visual elements.\n' +
-            'Focus on:\n' +
-            '- Character appearances and expressions\n' +
-            '- Environment and setting details\n' +
-            '- Lighting and atmosphere\n' +
-            '- Important objects or props\n' +
-            'Format the output as a comma-separated list of keywords and short phrases.\n' +
-            'Keep it concise and specific to what should be visualized.\n' +
-            'Example output:' +
-            '  character appearance: blonde, turquoise eyes, long slender legs, slim waist\n' +
-            '  environment: living room, couch, fire place, coffee table\n' +
+            'You are an expert at updating scene descriptions for Stable Diffusion image generation.\n' +
+            '\n' +
+            'Your task is to maintain and update character appearance and environment descriptions based on the ongoing conversation.\n' +
+            '\n' +
+            'RULES:\n' +
+            '1. Keep consistent base attributes (like hair color, eye color) unless explicitly changed in the scene\n' +
+            '2. Update dynamic elements (expressions, poses, clothing details) based on the current scene\n' +
+            '3. Maintain environment continuity while updating with new details from the scene\n' +
+            '4. Use specific, vivid, and Stable Diffusion-friendly English terms\n' +
+            '5. Format output as comma-separated words or short phrases\n' +
+            '\n' +
+            'REQUIRED OUTPUT FORMAT:\n' +
+            'character appearance: [physical attributes, current state, clothing]\n' +
+            'environment: [location details, lighting, atmosphere, objects]\n' +
             '<|im_end|>\n' +
             '<|im_start|>user\n' +
             'Update character appearance and environment based on this scene description:\n' +
@@ -168,7 +170,7 @@ def scene_to_prompt(scene: SceneContent):
 
         payload = make_payload(system_prompt, settings, preset, stream=False)
 
-        with httpx.Client() as client:
+        with httpx.Client(timeout=httpx.Timeout(60.0, connect=30.0)) as client:
             print("generating image prompt...")
             print(payload)
             response = client.post(

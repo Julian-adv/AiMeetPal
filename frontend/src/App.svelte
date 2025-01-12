@@ -178,7 +178,6 @@
     if (last_index > 0 && prevEntry && prevEntry.image_prompt) {
       prev_image_prompt = prevEntry.image_prompt
     }
-    await delay(500)
     let prompt = await scene_to_prompt(storyEntries[last_index].content, prev_image_prompt)
     if (!prompt) {
       prompt = storyEntries[last_index].content
