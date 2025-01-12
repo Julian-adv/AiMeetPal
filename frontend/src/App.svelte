@@ -139,13 +139,13 @@
     }
   }
 
-  async function scene_to_prompt(text: string) {
+  async function scene_to_prompt(text: string, prev_image_prompt: string) {
     const response = await fetch('http://localhost:5000/api/scene-to-prompt', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ content: text }),
+      body: JSON.stringify({ content: text, prev_image_prompt: prev_image_prompt }),
     })
     const data = await response.json()
     return data.prompt
@@ -172,14 +172,21 @@
   async function generate_last_image() {
     const last_index = storyEntries.length - 1
     storyEntries[last_index].image = 'wait_prompt'
+    let prev_image_prompt =
+      'character appearance: blonde, turquoise eyes, long slender legs, slim waist\nenvironment: living room, couch, fire place, coffee table'
+    const prevEntry = storyEntries[last_index - 1]
+    if (last_index > 0 && prevEntry && prevEntry.image_prompt) {
+      prev_image_prompt = prevEntry.image_prompt
+    }
     await delay(500)
-    let prompt = await scene_to_prompt(storyEntries[last_index].content)
+    let prompt = await scene_to_prompt(storyEntries[last_index].content, prev_image_prompt)
     if (!prompt) {
       prompt = storyEntries[last_index].content
     }
     storyEntries[last_index].image = 'wait_image'
     const prefix = 'score_9, score_8_up, score_7_up'
     storyEntries[last_index].image = await generate_image(`${prefix}, ${prompt}`)
+    storyEntries[last_index].image_prompt = prompt
   }
 
   async function handleChat(event: KeyboardEvent) {

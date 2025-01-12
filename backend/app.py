@@ -18,8 +18,9 @@ import shutil
 import uvicorn
 from ultralytics import YOLO
 from dotenv import load_dotenv
-from settings import load_settings, get_data_path
+from settings import load_settings, get_data_path, load_preset
 from prompt import make_prompt
+from payload import make_payload
 
 os.environ["TF_ENABLE_ONEDNN_OPTS"] = "0"
 # os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'  # hide tensorflow warnings
@@ -62,6 +63,7 @@ class ChatMessage(BaseModel):
 
 class SceneContent(BaseModel):
     content: str
+    prev_image_prompt: str
 
 class ImagePrompt(BaseModel):
     prompt: str
@@ -91,6 +93,7 @@ def encode(clip, text):
 @app.post("/api/chat")
 async def chat(message: ChatMessage):
     settings = load_settings()
+    preset = load_preset()
     async def generate():
         async with httpx.AsyncClient() as client:
             speaker = 'Stellar'
@@ -104,58 +107,7 @@ async def chat(message: ChatMessage):
             persona = "Julien is living alone in a luxury mansion."
             prompt = make_prompt("Julien", "Stellar", wiBefore, description, personality, scenario, wiAfter, persona, message.entries)
             print(prompt)
-            payload = {
-                "prompt": prompt,
-                "model": settings["model"],
-                "max_new_tokens": 1024,
-                "max_tokens": 1024,
-                "temperature": 0.85,
-                "top_p": 1,
-                "typical_p": 1,
-                "typical": 1,
-                "sampler_seed": -1,
-                "min_p": 0.05,
-                "repetition_penalty": 1.05,
-                "frequency_penalty": 0,
-                "presence_penalty": 0.2,
-                "top_k": 64,
-                "skew": 0,
-                "min_tokens": 0,
-                "add_bos_token": True,
-                "smoothing_factor": 0,
-                "smoothing_curve": 1,
-                "dry_allowed_length": 2,
-                "dry_multiplier": 0,
-                "dry_base": 1.75,
-                "dry_sequence_breakers": '["\\n",":","\\"","*"]',
-                "dry_penalty_last_n": 0,
-                "max_tokens_second": 0,
-                "stopping_strings": [
-                    '\nJulien:',
-                ],
-                "stop": [
-                    '\nJulien:',
-                ],
-                "truncation_length": 32768,
-                "ban_eos_token": False,
-                "skip_special_tokens": True,
-                "top_a": 0,
-                "tfs": 1,
-                "mirostat_mode": 0,
-                "mirostat_tau": 5,
-                "mirostat_eta": 0.1,
-                "custom_token_bans": '',
-                "banned_strings": [],
-                "api_type": 'infermaticai',
-                "api_server": 'https://api.totalgpt.ai',
-                "xtc_threshold": 0.1,
-                "xtc_probability": 0,
-                "nsigma": 0,
-                "n": 1,
-                "ignore_eos": False,
-                "spaces_between_special_tokens": True,
-                "stream": True
-            }
+            payload = make_payload(prompt, settings, preset)
 
             async with client.stream(
                 "POST",
@@ -187,11 +139,11 @@ async def chat(message: ChatMessage):
 @app.post("/api/scene-to-prompt")
 def scene_to_prompt(scene: SceneContent):
     settings = load_settings()
+    preset = load_preset()
     try:
         system_prompt = (
-            '<|start_header_id|>system<|end_header_id|>\n' +
-            '\n' +
-            'You are an expert at converting scene descriptions into Stable Diffusion image generation prompts.\n' +
+            '<|im_start|>system\n' +
+            'You are an expert at writing scene descriptions for Stable Diffusion image generation prompts.\n' +
             'Given a scene description, create a concise list of English words or short phrases that best capture the visual elements.\n' +
             'Focus on:\n' +
             '- Character appearances and expressions\n' +
@@ -200,69 +152,21 @@ def scene_to_prompt(scene: SceneContent):
             '- Important objects or props\n' +
             'Format the output as a comma-separated list of keywords and short phrases.\n' +
             'Keep it concise and specific to what should be visualized.\n' +
-            'Example output: "elegant maid Stellar, gentle smile, morning sunlight, luxurious mansion interior, classic uniform"<|eot_id|>\n' +
-            '<|start_header_id|>user<|end_header_id|>\n' +
-            '\n' +
-            'Convert this scene to image prompt:\n' +
+            'Example output:' +
+            '  character appearance: blonde, turquoise eyes, long slender legs, slim waist\n' +
+            '  environment: living room, couch, fire place, coffee table\n' +
+            '<|im_end|>\n' +
+            '<|im_start|>user\n' +
+            'Update character appearance and environment based on this scene description:\n' +
+            scene.prev_image_prompt + '\n\n' +
+            'scene description:\n' +
             scene.content +
-            '<|eot_id|>\n'
+            '<|im_end|>\n' +
+            '<|im_start|>assistant\n' +
+            '\n'
         )
 
-        payload = {
-            "prompt": system_prompt,
-            "model": settings["model"],
-            "max_new_tokens": settings["max_new_tokens"],
-            "max_tokens": settings["max_tokens"],
-            "temperature": settings["temperature"],
-            "top_p": settings["top_p"],
-            "typical_p": settings["typical_p"],
-            "typical": settings["typical"],
-            "sampler_seed": -1,
-            "min_p": 0.02,
-            "repetition_penalty": 1,
-            "frequency_penalty": 0,
-            "presence_penalty": 0,
-            "top_k": -1,
-            "skew": 0,
-            "min_tokens": 0,
-            "add_bos_token": True,
-            "smoothing_factor": 0,
-            "smoothing_curve": 1,
-            "dry_allowed_length": 2,
-            "dry_multiplier": 0.75,
-            "dry_base": 1.75,
-            "dry_sequence_breakers": '["\\n",":","\\"","*"]',
-            "dry_penalty_last_n": 0,
-            "max_tokens_second": 0,
-            "stopping_strings": [
-                "\nJulien:",
-                "\nStellar:",
-                "<|eot_id|>"
-            ],
-            "stop": [
-                "\nJulien:",
-                "\nStellar:",
-                "<|eot_id|>"
-            ],
-            "truncation_length": 8192,
-            "ban_eos_token": False,
-            "skip_special_tokens": True,
-            "top_a": 0,
-            "tfs": 1,
-            "mirostat_mode": 0,
-            "mirostat_tau": 5,
-            "mirostat_eta": 0.1,
-            "custom_token_bans": "",
-            "banned_strings": [],
-            "api_type": "infermaticai",
-            "api_server": "https://api.totalgpt.ai",
-            "xtc_threshold": 0.1,
-            "xtc_probability": 0.5,
-            "nsigma": 0,
-            "n": 1,
-            "ignore_eos": False,
-            "spaces_between_special_tokens": True,
-        }
+        payload = make_payload(system_prompt, settings, preset, stream=False)
 
         with httpx.Client() as client:
             print("generating image prompt...")
@@ -292,6 +196,7 @@ def scene_to_prompt(scene: SceneContent):
             return ImagePrompt(prompt=prompt)
 
     except Exception as e:
+        print(e)
         raise HTTPException(status_code=500, detail=str(e))
 
 
