@@ -1,0 +1,8 @@
+# ignore everything by default
+!*
+
+# ignore specific files/directories only
+node_modules/
+.git/
+.env
+*.log
