@@ -1,5 +1,6 @@
 <script lang="ts">
   import StoryScene from './components/StoryScene.svelte'
+  import CharacterList from './components/CharacterList.svelte'
   import type { StoryEntry, StoryEntries } from './types/story'
   import { onMount } from 'svelte'
 
@@ -27,6 +28,14 @@
   let error: string | null = null
   let user_name = 'Julien'
   let chatInputElement: HTMLInputElement
+
+  interface Character {
+    id: string
+    image: string
+  }
+
+  let characters: Character[] = []
+  let selectedCharacter: Character | null = null
 
   const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
 
@@ -229,7 +238,17 @@
   }
 
   onMount(async () => {
-    await generate_last_image()
+    try {
+      const response = await fetch('http://localhost:5000/api/characters')
+      if (response.ok) {
+        characters = await response.json()
+      } else {
+        console.error('Failed to fetch characters')
+      }
+    } catch (error) {
+      console.error('Error fetching characters:', error)
+    }
+    // await generate_last_image()
     chatInputElement?.focus()
   })
 </script>
@@ -258,6 +277,12 @@
   {/if}
 
   <div class="chat-container">
+    <CharacterList
+      {characters}
+      {selectedCharacter}
+      onSelect={(character) => selectedCharacter = character}
+    />
+
     {#if chatLoading}
       <p>Loading...</p>
     {/if}
