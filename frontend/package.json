@@ -12,12 +12,14 @@
     "format:check": "prettier --check ."
   },
   "devDependencies": {
-    "@sveltejs/kit": "^2.15.1",
+    "@steeze-ui/heroicons": "^2.2.0",
+    "@steeze-ui/svelte-icon": "^1.6.2",
     "@sveltejs/vite-plugin-svelte": "^5.0.3",
     "@tsconfig/svelte": "^5.0.4",
     "@types/node": "^22.10.5",
     "autoprefixer": "^10.4.17",
     "postcss": "^8.4.33",
+    "postcss-import": "^16.1.0",
     "prettier": "^3.4.2",
     "prettier-plugin-svelte": "^3.3.2",
     "svelte": "^5.15.0",

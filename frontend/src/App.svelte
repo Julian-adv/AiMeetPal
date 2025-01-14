@@ -1,6 +1,8 @@
 <script lang="ts">
   import StoryScene from './components/StoryScene.svelte'
   import CharacterList from './components/CharacterList.svelte'
+  import { Icon } from '@steeze-ui/svelte-icon'
+  import { UserGroup, ChatBubbleLeftRight } from '@steeze-ui/heroicons'
   import type { StoryEntry, StoryEntries } from './types/story'
   import type { Character } from './types/character'
   import { onMount } from 'svelte'
@@ -234,6 +236,14 @@
     }
   }
 
+  function selectCharacter(character: Character) {
+    selectedCharacter = character
+  }
+
+  function active_class(tab: string) {
+    return activeTab === tab ? 'active' : ''
+  }
+
   onMount(async () => {
     try {
       const response = await fetch('http://localhost:5000/api/characters')
@@ -251,33 +261,25 @@
 </script>
 
 <main class="container">
-  <h1>AiMeetPal</h1>
+  <h1>Ai Meet Pal</h1>
 
   <!-- Tabs -->
   <div class="tabs">
     <button
-      class="tab-button {activeTab === 'characters' ? 'active' : ''}"
+      class="tab-button {active_class('characters')}"
       on:click={() => (activeTab = 'characters')}
     >
+      <Icon src={UserGroup} width="24" height="24" class={active_class('characters')} />
       Characters
     </button>
-    <button
-      class="tab-button {activeTab === 'chat' ? 'active' : ''}"
-      on:click={() => (activeTab = 'chat')}
-    >
+    <button class="tab-button {active_class('chat')}" on:click={() => (activeTab = 'chat')}>
+      <Icon src={ChatBubbleLeftRight} width="24" height="24" class={active_class('chat')} />
       Chat
     </button>
   </div>
 
   {#if activeTab === 'characters'}
-    <CharacterList
-      {characters}
-      {selectedCharacter}
-      on:select={({ detail }) => {
-        selectedCharacter = detail
-        activeTab = 'chat'
-      }}
-    />
+    <CharacterList {characters} {selectedCharacter} {selectCharacter} />
   {:else}
     <div class="chat-container">
       {#if chatLoading}
@@ -309,31 +311,16 @@
 </main>
 
 <style>
-  .container {
-    max-width: 1280px;
-    margin: 0 auto;
-    padding: 0rem;
-  }
-
   h1 {
     text-align: center;
     color: #333;
     margin-bottom: 2rem;
-  }
-
-  button {
-    padding: 0.5rem 1rem;
-    font-size: 1rem;
-    background-color: #4caf50;
-    color: white;
-    border: none;
-    border-radius: 4px;
-    cursor: pointer;
-    transition: background-color 0.3s;
+    font-family: 'Edwardian Script ITC', Georgia, 'Times New Roman', Times, serif;
+    margin-top: 2rem;
   }
 
   button:hover:not(:disabled) {
-    background-color: #45a049;
+    background-color: theme('colors.sky.100');
   }
 
   button:disabled {
@@ -372,20 +359,30 @@
 
   .tab-button {
     padding: 0.5rem 1rem;
-    border: 1px solid #ccc;
+    border: none;
     border-radius: 0.5rem;
     background: transparent;
-    color: #333;
+    color: theme('colors.slate.400');
     cursor: pointer;
     transition: all 0.2s;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.8rem;
   }
 
-  .tab-button:hover {
-    background: #f0f0f0;
+  button.tab-icon {
+    width: 32px;
+    height: 32px;
+    color: theme('colors.slate.100');
+  }
+
+  .tab-icon.active {
+    color: theme('colors.sky.500');
   }
 
   .tab-button.active {
-    background: #ccc;
-    color: white;
+    color: theme('colors.sky.600');
   }
 </style>

@@ -1,10 +1,13 @@
 <script lang="ts">
   import type { Character } from '../types/character'
 
-  export let characters: Character[] = []
-  export let selectedCharacter: Character | null = null
+  interface Props {
+    characters: Character[]
+    selectedCharacter: Character | null
+    selectCharacter: (character: Character) => void
+  }
 
-  function selectCharacter(character: Character) {}
+  let { characters, selectedCharacter, selectCharacter }: Props = $props()
 </script>
 
 <div class="character-list">
@@ -15,9 +18,9 @@
         role="button"
         tabindex="0"
         aria-pressed={selectedCharacter?.id === character.id}
-        class="character-card {selectedCharacter?.id === character.id ? 'selected' : ''}"
-        on:click={() => selectCharacter(character)}
-        on:keydown={(e) => {
+        class="character-card shadow-md {selectedCharacter?.id === character.id ? 'selected' : ''}"
+        onclick={() => selectCharacter(character)}
+        onkeydown={(e) => {
           if (e.key === 'Enter' || e.key === ' ') {
             e.preventDefault()
             selectCharacter(character)
@@ -57,9 +60,9 @@
     cursor: pointer;
     padding: 0.5rem;
     border-radius: 8px;
-    background: rgba(255, 255, 255, 0.1);
+    background: theme('colors.zinc.100');
     transition: all 0.2s ease;
-    border: 2px solid transparent;
+    border: 1px solid theme('colors.zinc.300');
   }
 
   .character-card:hover {
@@ -75,9 +78,9 @@
 
   .character-card img {
     width: 100%;
-    height: auto;
-    aspect-ratio: auto;
-    object-fit: contain;
+    height: 255px;
+    object-fit: cover;
+    object-position: top;
     border-radius: 4px;
     margin-bottom: 0.5rem;
   }
@@ -95,5 +98,10 @@
     text-align: center;
     font-size: 0.9rem;
     color: theme('colors.gray.500');
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
   }
 </style>
