@@ -2,6 +2,7 @@
   import StoryScene from './components/StoryScene.svelte'
   import CharacterList from './components/CharacterList.svelte'
   import type { StoryEntry, StoryEntries } from './types/story'
+  import type { Character } from './types/character'
   import { onMount } from 'svelte'
 
   let nextId = 1
@@ -29,13 +30,9 @@
   let user_name = 'Julien'
   let chatInputElement: HTMLInputElement
 
-  interface Character {
-    id: string
-    image: string
-  }
-
   let characters: Character[] = []
   let selectedCharacter: Character | null = null
+  let activeTab = 'characters'
 
   const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
 
@@ -256,86 +253,72 @@
 <main class="container">
   <h1>AiMeetPal</h1>
 
-  <div class="input-section">
-    <textarea bind:value={prompt} placeholder="Enter your prompt here..."></textarea>
-    <button on:click={generateImage} disabled={loading || !prompt.trim()}>
-      {loading ? 'Generating...' : 'Generate Image'}
+  <!-- Tabs -->
+  <div class="tabs">
+    <button
+      class="tab-button {activeTab === 'characters' ? 'active' : ''}"
+      on:click={() => (activeTab = 'characters')}
+    >
+      Characters
+    </button>
+    <button
+      class="tab-button {activeTab === 'chat' ? 'active' : ''}"
+      on:click={() => (activeTab = 'chat')}
+    >
+      Chat
     </button>
   </div>
 
-  {#if error}
-    <div class="error">
-      {error}
-    </div>
-  {/if}
-
-  {#if generatedImage}
-    <div class="image-container">
-      <img src={generatedImage} alt={prompt} />
-      <p class="prompt">Prompt: {prompt}</p>
-    </div>
-  {/if}
-
-  <div class="chat-container">
+  {#if activeTab === 'characters'}
     <CharacterList
       {characters}
       {selectedCharacter}
-      onSelect={(character) => selectedCharacter = character}
+      on:select={({ detail }) => {
+        selectedCharacter = detail
+        activeTab = 'chat'
+      }}
     />
-
-    {#if chatLoading}
-      <p>Loading...</p>
-    {/if}
-    <div class="story">
-      {#each storyEntries as entry (entry.id)}
-        <StoryScene {entry} />
-      {/each}
-
-      {#if currentEntry.content}
-        <StoryScene entry={currentEntry} />
+  {:else}
+    <div class="chat-container">
+      {#if chatLoading}
+        <p>Loading...</p>
       {/if}
-    </div>
+      <div class="story">
+        {#each storyEntries as entry (entry.id)}
+          <StoryScene {entry} />
+        {/each}
 
-    <div class="chat-input-container">
-      <span class="user-name">{user_name}:</span>
-      <input
-        bind:this={chatInputElement}
-        type="text"
-        bind:value={chatInputValue}
-        on:keydown={handleChat}
-        disabled={chatLoading}
-        class="chat-input"
-      />
+        {#if currentEntry.content}
+          <StoryScene entry={currentEntry} />
+        {/if}
+      </div>
+
+      <div class="chat-input-container">
+        <span class="user-name">{user_name}:</span>
+        <input
+          bind:this={chatInputElement}
+          type="text"
+          bind:value={chatInputValue}
+          on:keydown={handleChat}
+          disabled={chatLoading}
+          class="chat-input"
+        />
+      </div>
     </div>
-  </div>
+  {/if}
 </main>
 
 <style>
   .container {
-    max-width: 800px;
+    max-width: 1280px;
     margin: 0 auto;
-    padding: 2rem;
+    padding: 0rem;
   }
 
   h1 {
     text-align: center;
     color: #333;
     margin-bottom: 2rem;
-  }
-
-  .input-section {
-    display: flex;
-    gap: 1rem;
-    margin-bottom: 2rem;
-  }
-
-  textarea {
-    flex: 1;
-    padding: 0.5rem;
-    font-size: 1rem;
-    border: 1px solid #ccc;
-    border-radius: 4px;
-    font-family: consolas;
   }
 
   button {
@@ -356,32 +339,6 @@
   button:disabled {
     background-color: #cccccc;
     cursor: not-allowed;
-  }
-
-  .error {
-    color: #ff0000;
-    padding: 1rem;
-    background-color: #ffebee;
-    border-radius: 4px;
-    margin-bottom: 1rem;
-  }
-
-  .image-container {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 1rem;
-  }
-
-  .image-container img {
-    max-width: 700px;
-    border-radius: 8px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-  }
-
-  .prompt {
-    color: #666;
-    font-style: italic;
   }
 
   .chat-container {
@@ -405,5 +362,30 @@
     font-size: 1rem;
     border: 1px solid #ccc;
     border-radius: 4px;
+  }
+
+  .tabs {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 2rem;
+  }
+
+  .tab-button {
+    padding: 0.5rem 1rem;
+    border: 1px solid #ccc;
+    border-radius: 0.5rem;
+    background: transparent;
+    color: #333;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .tab-button:hover {
+    background: #f0f0f0;
+  }
+
+  .tab-button.active {
+    background: #ccc;
+    color: white;
   }
 </style>
