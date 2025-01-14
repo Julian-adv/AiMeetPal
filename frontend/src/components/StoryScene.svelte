@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { marked } from 'marked'
   import type { StoryEntry } from '../types/story'
 
   let { entry }: { entry: StoryEntry } = $props()
@@ -23,15 +24,21 @@
   {#if entry.speaker}
     <span class="speaker">{entry.speaker}:</span>
   {/if}
-  {entry.content}
+  {@html marked(entry.content)}
 </div>
 
 <style>
   .story-scene {
     text-align: left;
     margin: 1rem 0;
-    white-space: pre-wrap;
+    white-space: normal;
     overflow: auto;
+    font-family: 'Segoe UI', Georgia, 'Times New Roman', Times, serif;
+    font-size: 1.1rem;
+  }
+
+  .story-scene :global p {
+    margin-block-end: 0.7rem;
   }
 
   .scene-image {

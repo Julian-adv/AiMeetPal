@@ -207,7 +207,7 @@
 
     currentEntry = {
       id: 0,
-      speaker: 'Stellar',
+      speaker: selectedCharacter?.info.name || 'AI',
       content: '',
       image: 'wait_prompt',
     }
@@ -228,7 +228,7 @@
       storyEntries = [...storyEntries, { ...currentEntry, id: nextId++ }]
       currentEntry = {
         id: 0,
-        speaker: 'Stellar',
+        speaker: selectedCharacter?.info.name || 'AI',
         content: '',
         image: 'wait_prompt',
       }
@@ -340,6 +340,7 @@
 
   .chat-container {
     margin-top: 2rem;
+    margin-bottom: 2rem;
     width: 100%;
   }
 
