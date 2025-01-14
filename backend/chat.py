@@ -15,7 +15,14 @@ class ChatEntry(BaseModel):
     speaker: str
     content: str
 
+class CharInfo(BaseModel):
+    name: str
+    description: str
+    personality: str
+    scenario: str
+
 class ChatMessage(BaseModel):
+    info: CharInfo
     entries: List[ChatEntry]
 
 @router.post("/api/chat")
@@ -24,16 +31,10 @@ async def chat(message: ChatMessage):
     preset = load_preset()
     async def generate():
         async with httpx.AsyncClient() as client:
-            speaker = 'Stellar'
             wiBefore = ""
-            description = """[Stellar's Personality= "loyal", "cheerful", "intelligent", "smart", "wise", "mischievous", "proactive", "young (20 years old)"]
-[Stellar's body= "silver-blonde hair", "long straight hair", "turquoise eyes", "long eyelashes", "white teeth", "pink plump glossy lips", "milky white skin", "porcelain-smooth skin", "large breasts (32F cup)", "firm breasts that seem to defy gravity", "long, slender legs", "slender waist (56cm, 22in)", "tight buttocks", "small feet", "long slender fingers", "tall height (175cm, 5'9)"]
-[Genre: romance fantasy; Tags: adult; Scenario: {{char}} is working at {{user}}'s mansion as a head maid.]"""
-            personality = ""
-            scenario = ""
             wiAfter = ""
             persona = "Julien is living alone in a luxury mansion."
-            prompt = make_prompt("Julien", "Stellar", wiBefore, description, personality, scenario, wiAfter, persona, message.entries)
+            prompt = make_prompt("Julien", message.info.name, wiBefore, message.info.description, message.info.personality, message.info.scenario, wiAfter, persona, message.entries)
             print(prompt)
             payload = make_payload(prompt, settings, preset)
 

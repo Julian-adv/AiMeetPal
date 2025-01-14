@@ -1,7 +1,7 @@
 <script lang="ts">
   import type { StoryEntry } from '../types/story'
 
-  export let entry: StoryEntry
+  let { entry }: { entry: StoryEntry } = $props()
 </script>
 
 <div class="story-scene">

@@ -6,6 +6,7 @@
   import type { StoryEntry, StoryEntries } from './types/story'
   import type { Character } from './types/character'
   import { onMount } from 'svelte'
+  import Handlebars from 'handlebars'
 
   let nextId = 1
   let prompt = ''
@@ -21,13 +22,11 @@
   let storyEntries: StoryEntries = [
     {
       id: nextId++,
-      speaker: 'Stellar',
-      content:
-        'Good morning. Master. Stellar, your new maid candidate, has arrived and is waiting for you. Shall I bring her here?',
+      speaker: '',
+      content: '',
       image: null,
     },
   ]
-  let chatLoading = false
   let error: string | null = null
   let user_name = 'Julien'
   let chatInputElement: HTMLInputElement
@@ -111,7 +110,7 @@
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ entries: chatEntries }),
+      body: JSON.stringify({ info: selectedCharacter?.info, entries: chatEntries }),
     })
 
     if (!response.ok) {
@@ -180,11 +179,17 @@
   async function generate_last_image() {
     const last_index = storyEntries.length - 1
     storyEntries[last_index].image = 'wait_prompt'
-    let prev_image_prompt =
-      'character appearance: blonde, turquoise eyes, long slender legs, slim waist\nenvironment: living room, couch, fire place, coffee table'
-    const prevEntry = storyEntries[last_index - 1]
-    if (last_index > 0 && prevEntry && prevEntry.image_prompt) {
-      prev_image_prompt = prevEntry.image_prompt
+    let prev_image_prompt = 'character appearance: blonde\nenvironment: living room'
+    if (last_index > 0) {
+      const prevEntry = storyEntries[last_index - 1]
+      if (prevEntry.image_prompt) {
+        prev_image_prompt = prevEntry.image_prompt
+      }
+    } else {
+      if (selectedCharacter?.info.description) {
+        const template = Handlebars.compile(selectedCharacter.info.description)
+        prev_image_prompt = template({ char: selectedCharacter.info.name, user: 'Juliean' })
+      }
     }
     let prompt = await scene_to_prompt(storyEntries[last_index].content, prev_image_prompt)
     if (!prompt) {
@@ -200,7 +205,6 @@
     if (event.key !== 'Enter') return
     if (!chatInputValue.trim()) return
 
-    chatLoading = true
     currentEntry = {
       id: 0,
       speaker: 'Stellar',
@@ -232,7 +236,6 @@
     } catch (e: unknown) {
       error = e instanceof Error ? e.message : 'An unknown error occurred'
     } finally {
-      chatLoading = false
     }
   }
 
@@ -242,6 +245,16 @@
 
   function active_class(tab: string) {
     return activeTab === tab ? 'active' : ''
+  }
+
+  async function start_chat() {
+    activeTab = 'chat'
+    if (selectedCharacter) {
+      const template = Handlebars.compile(selectedCharacter.info.first_mes)
+      storyEntries[0].content = template({ user: 'Juliean', char: selectedCharacter.info.name })
+      storyEntries[0].speaker = selectedCharacter.info.name
+    }
+    await generate_last_image()
   }
 
   onMount(async () => {
@@ -255,7 +268,6 @@
     } catch (error) {
       console.error('Error fetching characters:', error)
     }
-    // await generate_last_image()
     chatInputElement?.focus()
   })
 </script>
@@ -272,7 +284,7 @@
       <Icon src={UserGroup} width="24" height="24" class={active_class('characters')} />
       Characters
     </button>
-    <button class="tab-button {active_class('chat')}" on:click={() => (activeTab = 'chat')}>
+    <button class="tab-button {active_class('chat')}" on:click={start_chat}>
       <Icon src={ChatBubbleLeftRight} width="24" height="24" class={active_class('chat')} />
       Chat
     </button>
@@ -282,9 +294,6 @@
     <CharacterList {characters} {selectedCharacter} {selectCharacter} />
   {:else}
     <div class="chat-container">
-      {#if chatLoading}
-        <p>Loading...</p>
-      {/if}
       <div class="story">
         {#each storyEntries as entry (entry.id)}
           <StoryScene {entry} />
@@ -302,7 +311,6 @@
           type="text"
           bind:value={chatInputValue}
           on:keydown={handleChat}
-          disabled={chatLoading}
           class="chat-input"
         />
       </div>
@@ -320,7 +328,9 @@
   }
 
   button:hover:not(:disabled) {
-    background-color: theme('colors.sky.100');
+    border-color: theme('colors.sky.100');
+    border-bottom: 3px solid theme('colors.sky.100');
+    border-radius: 0;
   }
 
   button:disabled {
@@ -358,9 +368,9 @@
   }
 
   .tab-button {
-    padding: 0.5rem 1rem;
+    padding: 0.3rem 1rem;
     border: none;
-    border-radius: 0.5rem;
+    border-radius: 0;
     background: transparent;
     color: theme('colors.slate.400');
     cursor: pointer;
@@ -368,7 +378,7 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 0.5rem;
+    gap: 0.1rem;
     font-size: 0.8rem;
   }
 
@@ -379,10 +389,16 @@
   }
 
   .tab-icon.active {
-    color: theme('colors.sky.500');
+    color: theme('colors.blue.700');
   }
 
   .tab-button.active {
-    color: theme('colors.sky.600');
+    color: theme('colors.sky.700');
+    border-bottom: 3px solid theme('colors.sky.300');
+  }
+
+  .tab-button.active:hover {
+    color: theme('colors.sky.800');
+    border-bottom: 3px solid theme('colors.sky.500');
   }
 </style>

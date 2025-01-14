@@ -18,7 +18,7 @@
         role="button"
         tabindex="0"
         aria-pressed={selectedCharacter?.id === character.id}
-        class="character-card shadow-md {selectedCharacter?.id === character.id ? 'selected' : ''}"
+        class="character-card {selectedCharacter?.id === character.id ? 'selected' : ''}"
         onclick={() => selectCharacter(character)}
         onkeydown={(e) => {
           if (e.key === 'Enter' || e.key === ' ') {
@@ -28,8 +28,10 @@
         }}
       >
         <img src={character.image} alt={character.info.name} />
-        <h3>{character.info.name}</h3>
-        <p>{@html character.info.personality}</p>
+        <div class="character-info">
+          <h3>{character.info.name}</h3>
+          <p>{@html character.info.personality}</p>
+        </div>
       </div>
     {/each}
   </div>
@@ -58,17 +60,18 @@
 
   .character-card {
     cursor: pointer;
-    padding: 0.5rem;
+    padding: 0rem;
     border-radius: 8px;
-    background: theme('colors.zinc.100');
+    background: theme('colors.zinc.200');
     transition: all 0.2s ease;
     border: 1px solid theme('colors.zinc.300');
+    @apply shadow-md;
   }
 
   .character-card:hover {
-    background: rgba(255, 255, 255, 0.2);
+    background: theme('colors.zinc.50');
     transform: translateY(-2px);
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    @apply shadow-lg;
   }
 
   .character-card.selected {
@@ -82,11 +85,13 @@
     object-fit: cover;
     object-position: top;
     border-radius: 4px;
-    margin-bottom: 0.5rem;
+  }
+
+  .character-info {
+    padding: 0.5rem;
   }
 
   .character-card h3 {
-    margin: 0;
     text-align: center;
     font-size: 1rem;
     font-weight: bold;
@@ -94,7 +99,6 @@
   }
 
   .character-card p {
-    margin: 0;
     text-align: center;
     font-size: 0.9rem;
     color: theme('colors.gray.500');
