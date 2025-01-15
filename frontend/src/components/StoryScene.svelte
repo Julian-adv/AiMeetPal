@@ -3,6 +3,12 @@
   import type { StoryEntry } from '../types/story'
 
   let { entry }: { entry: StoryEntry } = $props()
+
+  function highlightQuotes(content: string) {
+    let markedContent = marked(content, { async: false })
+    markedContent = markedContent.replace(/"([^"]+)"/g, '<span class="quoted-text">"$1"</span>')
+    return markedContent.replace(/&quot;(.+?)&quot;/g, '<span class="quoted-text">"$1"</span>')
+  }
 </script>
 
 <div class="story-scene">
@@ -26,7 +32,7 @@
   {#if entry.speaker}
     <span class="speaker">{entry.speaker}:</span>
   {/if}
-  {@html marked(entry.content)}
+  {@html highlightQuotes(entry.content)}
 </div>
 
 <style>
@@ -37,10 +43,15 @@
     overflow: auto;
     font-family: 'Segoe UI', Georgia, 'Times New Roman', Times, serif;
     font-size: 1.1rem;
+    color: theme('colors.neutral.600');
   }
 
   .story-scene :global p {
     margin-block-end: 0.7rem;
+  }
+
+  .story-scene :global .quoted-text {
+    color: theme('colors.blue.800');
   }
 
   .scene-image {

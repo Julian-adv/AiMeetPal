@@ -8,6 +8,10 @@
   }
 
   let { characters, selectedCharacter, selectCharacter }: Props = $props()
+
+  function removeHtmlTags(str: string): string {
+    return str.replace(/<[^>]*>/g, '');
+  }
 </script>
 
 <div class="character-list">
@@ -30,7 +34,7 @@
         <img src={character.image} alt={character.info.name} />
         <div class="character-info">
           <h3>{character.info.name}</h3>
-          <p>{@html character.info.personality}</p>
+          <p>{removeHtmlTags(character.info.personality)}</p>
         </div>
       </div>
     {/each}
