@@ -158,7 +158,13 @@
     return data.prompt
   }
 
-  async function generate_image(text: string) {
+  async function generate_image(text: string, portrait: boolean = true) {
+    let width = 832
+    let height = 1216
+    if (!portrait) {
+      width = 1216
+      height = 832
+    }
     const response = await fetch('http://localhost:5000/api/generate-image', {
       method: 'POST',
       headers: {
@@ -167,13 +173,14 @@
       body: JSON.stringify({
         prompt: text,
         guidance_scale: 4.5,
-        width: 832 * 1,
-        height: 1216 * 1,
+        width: width * 1,
+        height: height * 1,
         face_steps: 20,
       }),
     })
     const data = await response.json()
-    return data.image
+    const image = data.image
+    return { image, width, height }
   }
 
   async function generate_last_image() {
@@ -197,7 +204,11 @@
     }
     storyEntries[last_index].image = 'wait_image'
     const prefix = 'score_9, score_8_up, score_7_up'
-    storyEntries[last_index].image = await generate_image(`${prefix}, ${prompt}`)
+    const portrait = !!prompt.match(/format:\s*portrait/i)
+    const { image, width, height } = await generate_image(`${prefix}, ${prompt}`, portrait)
+    storyEntries[last_index].image = image
+    storyEntries[last_index].width = width
+    storyEntries[last_index].height = height
     storyEntries[last_index].image_prompt = prompt
   }
 

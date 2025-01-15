@@ -3,6 +3,8 @@ export interface StoryEntry {
   speaker: string
   content: string
   image: string | null
+  width?: number
+  height?: number
   image_prompt?: string
 }
 

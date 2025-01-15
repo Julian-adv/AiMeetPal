@@ -7,7 +7,9 @@
 
 <div class="story-scene">
   {#if entry.image}
-    <div class="scene-image">
+    <div
+      class="scene-image {entry.width && entry.height && entry.width > entry.height ? 'wide' : ''}"
+    >
       {#if entry.image === 'wait_prompt' || entry.image === 'wait_image'}
         <div class="image-placeholder">
           {#if entry.image === 'wait_prompt'}
@@ -45,6 +47,13 @@
     float: left;
     width: 384px;
     margin: 0 1rem 0.5rem 0;
+  }
+
+  .scene-image.wide {
+    width: 70%;
+    height: auto;
+    float: none;
+    margin: 0 auto 0.5rem auto;
   }
 
   .scene-image img {
