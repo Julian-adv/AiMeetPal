@@ -1,16 +1,29 @@
 <script lang="ts">
+  import { onMount } from 'svelte'
   import type { Character } from '../types/character'
+  import { state } from '../lib/state.svelte'
 
-  interface Props {
-    characters: Character[]
-    selectedCharacter: Character | null
-    selectCharacter: (character: Character) => void
-  }
+  let characters: Character[] = []
 
-  let { characters, selectedCharacter, selectCharacter }: Props = $props()
+  onMount(async () => {
+    try {
+      const response = await fetch('http://localhost:5000/api/characters')
+      if (response.ok) {
+        characters = await response.json()
+      } else {
+        console.error('Failed to fetch characters')
+      }
+    } catch (error) {
+      console.error('Error fetching characters:', error)
+    }
+  })
 
   function removeHtmlTags(str: string): string {
-    return str.replace(/<[^>]*>/g, '');
+    return str.replace(/<[^>]*>/g, '')
+  }
+
+  function selectCharacter(character: Character) {
+    state.selected_char = character
   }
 </script>
 
@@ -21,8 +34,8 @@
       <div
         role="button"
         tabindex="0"
-        aria-pressed={selectedCharacter?.id === character.id}
-        class="character-card {selectedCharacter?.id === character.id ? 'selected' : ''}"
+        aria-pressed={state.selected_char?.id === character.id}
+        class="character-card {state.selected_char?.id === character.id ? 'selected' : ''}"
         onclick={() => selectCharacter(character)}
         onkeydown={(e) => {
           if (e.key === 'Enter' || e.key === ' ') {
@@ -57,7 +70,7 @@
 
   .character-grid {
     display: grid;
-    max-width: 900px;
+    max-width: 902px;
     grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
     gap: 0.5rem;
   }
@@ -88,7 +101,7 @@
     height: 255px;
     object-fit: cover;
     object-position: top;
-    border-radius: 4px;
+    border-radius: 8px 8px 0 0;
   }
 
   .character-info {
