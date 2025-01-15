@@ -59,7 +59,7 @@
   }
 </script>
 
-<main class="container">
+<main class="main-container">
   <h1>Ai Meet Pal</h1>
 
   <Tabs {tab_items} {active_tab_value} />
@@ -72,5 +72,9 @@
     margin-bottom: 2rem;
     font-family: 'Edwardian Script ITC', Georgia, 'Times New Roman', Times, serif;
     margin-top: 2rem;
+  }
+
+  .main-container {
+    width: 100%;
   }
 </style>
