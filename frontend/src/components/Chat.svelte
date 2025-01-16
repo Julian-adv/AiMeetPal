@@ -241,10 +241,10 @@
 
 <style>
   .chat-container {
-    max-width: 902px;
     margin-top: 2rem;
     margin-bottom: 2rem;
     width: 100%;
+    padding: 0 70px;
   }
 
   .chat-input-container {

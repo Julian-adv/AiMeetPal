@@ -13,14 +13,6 @@
 </div>
 
 <style>
-  h2 {
-    margin: 0 0 1rem 0;
-    font-size: 1.2rem;
-    font-weight: bold;
-    color: theme('colors.gray.700');
-    text-align: left;
-  }
-
   .settings-container {
     display: block;
     text-align: left;

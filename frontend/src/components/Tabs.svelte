@@ -26,31 +26,29 @@
   }
 </script>
 
-<div class="tabs-container">
+<div class="tabs-container" style="--max-width: {902}px">
   <div class="tabs" role="tablist">
-    <div class="spacer"></div>
-    {#each tab_items as item}
-      <button
-        role="tab"
-        aria-selected={active_tab_value === item.value}
-        aria-controls="panel-{item.value}"
-        class={active_class(item.value)}
-        onclick={handle_click(item.value)}
-        onkeydown={handle_keydown(item.value)}
-      >
-        <Icon src={item.icon} width="24" height="24" class={active_class(item.value)} />
-        {item.label}
-      </button>
-    {/each}
-    <div class="spacer"></div>
+    <div class="tab-list-container">
+      {#each tab_items as item}
+        <button
+          role="tab"
+          aria-selected={active_tab_value === item.value}
+          aria-controls="panel-{item.value}"
+          class={active_class(item.value)}
+          onclick={handle_click(item.value)}
+          onkeydown={handle_keydown(item.value)}
+        >
+          <Icon src={item.icon} width="24" height="24" class={active_class(item.value)} />
+          {item.label}
+        </button>
+      {/each}
+    </div>
   </div>
 
   <div class="content-container">
     {#each tab_items as item}
       {#if active_tab_value === item.value}
-        <div id="panel-{item.value}" role="tabpanel" class="box" tabindex="0">
-          <item.component />
-        </div>
+        <item.component />
       {/if}
     {/each}
   </div>
@@ -65,22 +63,33 @@
     width: 100%;
   }
 
+  .tab-list-container {
+    width: min(var(--max-width), 100%);
+    margin: 0 auto;
+    display: flex;
+  }
+
   .content-container {
     flex: 1;
     overflow-y: auto;
-    width: min(1024px, 100%);
+    width: min(var(--max-width), 100%);
     margin: 0 auto;
   }
 
-  .box {
-    margin-bottom: 10px;
-    padding: 40px;
+  .content-container :global(h2) {
+    margin: 1rem 0;
+    font-size: 1.2rem;
+    font-weight: bold;
+    font-family:
+      Georgia,
+      Times New Roman,
+      Times,
+      serif;
+    color: theme('colors.slate.600');
   }
 
   .tabs {
     width: 100%;
-    display: flex;
-    flex-wrap: wrap;
     padding-bottom: 1px;
     position: sticky;
     top: 0;

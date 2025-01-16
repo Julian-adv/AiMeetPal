@@ -62,16 +62,10 @@
     margin-bottom: 1rem;
   }
 
-  .character-list h2 {
-    margin: 0 0 1rem 0;
-    font-size: 1.2rem;
-    color: theme('colors.gray.700');
-  }
-
   .character-grid {
     display: grid;
     max-width: 902px;
-    grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
     gap: 0.5rem;
   }
 
