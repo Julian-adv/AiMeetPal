@@ -12,6 +12,7 @@ class Settings(BaseModel):
     instruct: str
     context: str
     model: str
+    max_tokens: int
     checkpoints_folder: str
     checkpoint_name: str
 
@@ -31,6 +32,7 @@ def load_settings(reload=False):
                 "instruct": "anthracite-org-magnum-v4-72b-FP8-Dynamic-instruct.json",
                 "context": "anthracite-org-magnum-v4-72b-FP8-Dynamic-context.json",
                 "model": "anthracite-org-magnum-v4-72b-FP8-Dynamic",
+                "max_tokens": 1024,
                 "checkpoints_folder": ".",
                 "checkpoint_name": ""
             }
@@ -67,4 +69,5 @@ async def save_settings(data: Settings):
     print(data)
     with open(get_data_path('settings.json'), "w") as f:
         json.dump(data.model_dump(), f, indent=2)
+    load_settings(reload=True)
     return {"success": True}

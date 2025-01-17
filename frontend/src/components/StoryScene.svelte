@@ -3,6 +3,8 @@
   import type { StoryEntry } from '../types/story'
 
   let { entry }: { entry: StoryEntry } = $props()
+  let width = $derived(entry.width ?? 832)
+  let height = $derived(entry.height ?? 1216)
 
   function highlightQuotes(content: string) {
     let markedContent = marked(content, { async: false })
@@ -14,7 +16,8 @@
 <div class="story-scene">
   {#if entry.image}
     <div
-      class="scene-image {entry.width && entry.height && entry.width > entry.height ? 'wide' : ''}"
+      class={width > height ? 'scene-image-wide' : 'scene-image'}
+      style="--image-width: {width}px; --image-height: {height}px;"
     >
       {#if entry.image === 'wait_prompt' || entry.image === 'wait_image'}
         <div class="image-placeholder">
@@ -56,13 +59,14 @@
 
   .scene-image {
     float: left;
-    width: 384px;
+    width: calc(var(--image-width) * 0.45);
+    height: calc(var(--image-height) * 0.45);
     margin: 0 1rem 0.5rem 0;
   }
 
-  .scene-image.wide {
-    width: 70%;
-    height: auto;
+  .scene-image-wide {
+    width: calc(var(--image-width) * 0.6);
+    height: calc(var(--image-height) * 0.6);
     float: none;
     margin: 0 auto 0.5rem auto;
   }
@@ -73,9 +77,15 @@
     border-radius: 8px;
   }
 
+  .scene-image-wide img {
+    max-width: 100%;
+    height: auto;
+    border-radius: 8px;
+  }
+
   .image-placeholder {
     width: 100%;
-    aspect-ratio: 832/1216;
+    height: 100%;
     background-color: #f0f0f0;
     border-radius: 8px;
     display: flex;

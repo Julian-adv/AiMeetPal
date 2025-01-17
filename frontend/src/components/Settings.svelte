@@ -184,6 +184,8 @@
         {/each}
       </select>
     </div>
+    <div class="label">Max tokens</div>
+    <Input class="focus:ring-2 ring-sky-500" bind:value={settings.max_tokens} />
     <div class="label">Image model folder</div>
     <div class="folder-select">
       <Input class="focus:ring-2 ring-sky-500" bind:value={settings.checkpoints_folder} />
@@ -198,7 +200,7 @@
       </select>
     </div>
   </div>
-  <Button color="sky" class="m-3 mx-auto" onclick={() => save_server_settings(settings)}
+  <Button color="primary" class="m-3 mx-auto" onclick={() => save_server_settings(settings)}
     >Save</Button
   >
 </div>
