@@ -3,8 +3,8 @@
   import { onMount } from 'svelte'
   import { Modal, Button, Input, uiHelpers, Breadcrumb, BreadcrumbItem } from 'svelte-5-ui-lib'
 
-  let models: string[] = []
-  let checkpoints_folder: HTMLInputElement
+  let language_models: string[] = $state([])
+  let checkpoints: string[] = $state([])
   const modalExample = uiHelpers()
   let modalStatus = $state(false)
   const closeModal = modalExample.close
@@ -24,11 +24,29 @@
 
   let path_entries = $state<string[]>([])
 
-  async function checkpoint_list() {
+  async function get_checkpoints() {
     try {
-      const response = await fetch('http://localhost:5000/api/checkpoints')
-      const data = await response.json()
-      return data
+      const entries = await get_dir_entries(settings.checkpoints_folder)
+      checkpoints = entries.entries.map((entry: Entry) => entry.name)
+    } catch (error) {
+      console.error('Error fetching checkpoints:', error)
+    }
+  }
+
+  async function get_language_models() {
+    try {
+      const response = await fetch('https://api.totalgpt.ai/v1/models', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${settings.infermaticAiApiKey}`,
+        },
+      })
+      if (response.ok) {
+        const data = await response.json()
+        const models = data.data.map((model: any) => model.id)
+        return models.sort((a: string, b: string) => a.toLowerCase().localeCompare(b.toLowerCase()))
+      }
     } catch (error) {
       console.error('Error fetching model list:', error)
       return []
@@ -36,20 +54,17 @@
   }
 
   async function get_dir_entries(path: string) {
-    try {
-      const response = await fetch('http://localhost:5000/api/files', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ path: path }),
-      })
-      const data = await response.json()
-      return data
-    } catch (error) {
-      console.error('Error fetching model list:', error)
-      return []
+    const response = await fetch('http://localhost:5000/api/files', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ path: path }),
+    })
+    if (response.ok) {
+      return await response.json()
     }
+    throw new Error('Failed to fetch directory entries')
   }
 
   function dir_to_path_entries(path: string) {
@@ -85,33 +100,107 @@
     }
   }
 
-  const select_path = () => {
+  async function save_server_settings(settings: any) {
+    try {
+      const response = await fetch('http://localhost:5000/api/save_settings', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(settings),
+      })
+      if (response.ok) {
+        return await response.json()
+      }
+    } catch (error) {
+      console.error('Error saving settings:', error)
+      return []
+    }
+  }
+
+  const select_path = async () => {
     settings.checkpoints_folder = dir_entries.current_directory
     modalExample.close()
+    await get_checkpoints()
+  }
+
+  async function load_server_settings() {
+    try {
+      const response = await fetch('http://localhost:5000/api/settings')
+      if (response.ok) {
+        const data = await response.json()
+        return data
+      }
+    } catch (error) {
+      console.error('Error fetching model list:', error)
+      return []
+    }
   }
 
   onMount(async () => {
-    dir_entries = await get_dir_entries(dir_entries.current_directory)
+    const server_settings = await load_server_settings()
+    Object.assign(settings, server_settings)
+    dir_entries.current_directory = settings.checkpoints_folder
+    try {
+      dir_entries = await get_dir_entries(dir_entries.current_directory)
+    } catch (error) {
+      console.error('Error fetching dir entries:', error)
+      dir_entries.current_directory = '.'
+      try {
+        dir_entries = await get_dir_entries(dir_entries.current_directory)
+      } catch (error) {
+        console.error('Error fetching dir entries .:', error)
+      }
+    }
+    try {
+      await get_checkpoints()
+    } catch (error) {
+      console.error('Error fetching checkpoints:', error)
+    }
+    try {
+      language_models = await get_language_models()
+    } catch (error) {
+      console.error('Error fetching language models:', error)
+    }
   })
 </script>
 
 <h2>Settings</h2>
 <div class="settings-container">
   <div class="settings">
-    <div class="label">Image model folder</div>
-    <div class="folder-select">
-      <div>{settings.checkpoints_folder}</div>
-      <Button color="light" size="sm" onclick={handle_checkpoints_folder}>Browse...</Button>
-    </div>
-    <div class="label">Image model</div>
+    <div class="label">Infermatic.ai API key</div>
+    <Input class="focus:ring-2 ring-sky-500" bind:value={settings.infermaticAiApiKey} />
+    <div class="label">Preset</div>
+    <Input class="focus:ring-2 ring-sky-500" bind:value={settings.preset} />
+    <div class="label">Instruct</div>
+    <Input class="focus:ring-2 ring-sky-500" bind:value={settings.instruct} />
+    <div class="label">Context</div>
+    <Input class="focus:ring-2 ring-sky-500" bind:value={settings.context} />
+    <div class="label">Language model</div>
     <div>
       <select bind:value={settings.model}>
-        {#each models as model}
+        {#each language_models as model}
           <option value={model}>{model}</option>
         {/each}
       </select>
     </div>
+    <div class="label">Image model folder</div>
+    <div class="folder-select">
+      <Input class="focus:ring-2 ring-sky-500" bind:value={settings.checkpoints_folder} />
+      <Button color="light" size="sm" onclick={handle_checkpoints_folder}>Browse...</Button>
+    </div>
+    <div class="label">Image model</div>
+    <div>
+      <select bind:value={settings.checkpoint_name}>
+        {#each checkpoints as checkpoint}
+          <option value={checkpoint}>{checkpoint}</option>
+        {/each}
+      </select>
+    </div>
   </div>
+  <Button color="sky" class="m-3 mx-auto" onclick={() => save_server_settings(settings)}
+    >Save</Button
+  >
 </div>
 
 <Modal size="lg" title="Select folder" {modalStatus} {closeModal}>
@@ -144,7 +233,8 @@
 
 <style lang="postcss">
   .settings-container {
-    display: block;
+    display: flex;
+    flex-direction: column;
     text-align: left;
     width: 100%;
   }
@@ -174,6 +264,10 @@
     border-radius: 4px;
     border: 1px solid #ccc;
     width: auto;
+  }
+
+  select:focus {
+    @apply ring-2 ring-sky-500 outline-none;
   }
 
   .entries {

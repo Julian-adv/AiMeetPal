@@ -44,6 +44,7 @@ async def get_files(cur_dir: CurrentDirectory):
     try:
         entries = os.listdir(path)
         entries = [Entry(name=entry, is_dir=os.path.isdir(os.path.join(path, entry))) for entry in entries]
+        entries.sort(key=lambda x: (not x.is_dir, x.name.lower()))
         return Entries(
             entries=entries,
             current_directory=path
