@@ -136,7 +136,7 @@
     } else {
       if (state.selected_char?.info.description) {
         const template = Handlebars.compile(state.selected_char.info.description)
-        prev_image_prompt = template({ char: state.selected_char.info.name, user: 'Juliean' })
+        prev_image_prompt = template({ char: state.selected_char.info.name, user: 'Julien' })
       }
     }
     let prompt = await scene_to_prompt(state.story_entries[last_index].content, prev_image_prompt)
@@ -263,5 +263,6 @@
     font-size: 1rem;
     border: 1px solid #ccc;
     border-radius: 4px;
+    @apply focus:ring-2 ring-sky-500 outline-none;
   }
 </style>

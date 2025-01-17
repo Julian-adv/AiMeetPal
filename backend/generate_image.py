@@ -10,19 +10,18 @@ import comfy.sd
 from comfyui.nodes import KSampler, EmptyLatentImage, VAEDecodeTiled
 from impact.subcore import UltraBBoxDetector
 from ultralytics import YOLO
-from settings import get_data_path
+from settings import get_data_path, load_settings
+import os.path
 
 router = APIRouter()
 
-# Initialize models
-model_name = "phonyponypepperoni_pppv5"
-ckpt_path = get_data_path(f"checkpoints/{model_name}.safetensors")
 embedding_path = get_data_path('embeddings')
 
 # Initialize face detection
 face_detector = UltraBBoxDetector(YOLO(get_data_path('face_yolov8m.pt')))
 
 check_point = None
+ckpt_path = None
 clip = None
 vae = None
 empty_latent_image = None
@@ -61,7 +60,11 @@ async def generate_image(request: ImageGenerationRequest):
         global check_point
         global clip
         global vae
-        if not check_point:
+        global ckpt_path
+        settings = load_settings()
+        new_ckpt_path = os.path.join(settings['checkpoints_folder'], settings['checkpoint_name'])
+        if not check_point or new_ckpt_path != ckpt_path:
+            ckpt_path = new_ckpt_path
             check_point,clip,vae,_ = comfy.sd.load_checkpoint_guess_config(ckpt_path, output_vae=True, output_clip=True, embedding_directory=embedding_path)
 
         global empty_latent_image
@@ -134,4 +137,3 @@ async def generate_image(request: ImageGenerationRequest):
         print("Stack trace:")
         traceback.print_exc()
         raise HTTPException(status_code=500, detail=str(e))
-
