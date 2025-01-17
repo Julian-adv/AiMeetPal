@@ -36,3 +36,4 @@ def load_context():
     settings = load_settings()
     with open(get_data_path(settings['context']), "r") as f:
         return json.load(f)
+
