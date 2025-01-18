@@ -10,7 +10,7 @@
     id: 0,
     speaker: '',
     content: '',
-    state: 'wait_prompt',
+    state: 'wait_content',
     image: null,
   }
   let user_name = 'Julien'
@@ -31,9 +31,15 @@
 
   function received_text(text: string) {
     if (currentEntry.speaker === '') {
-      currentEntry.content = formatResponse(currentEntry.content + text)
+      currentEntry = {
+        ...currentEntry,
+        content: formatResponse(currentEntry.content + text),
+      }
     } else {
-      currentEntry.content += text
+      currentEntry = {
+        ...currentEntry,
+        content: currentEntry.content + text,
+      }
     }
   }
 
@@ -93,7 +99,7 @@
       id: 0,
       speaker: state.selected_char?.info.name || 'AI',
       content: '',
-      state: 'wait_prompt',
+      state: 'wait_content',
       image: null,
     }
     error = null
@@ -111,12 +117,15 @@
       ]
       chatInputValue = ''
       await send_chat(state.story_entries, received_text)
-      state.story_entries = [...state.story_entries, { ...currentEntry, id: nextId++ }]
+      state.story_entries = [
+        ...state.story_entries,
+        { ...currentEntry, id: nextId++, state: 'wait_prompt' },
+      ]
       currentEntry = {
         id: 0,
         speaker: state.selected_char?.info.name || 'AI',
         content: '',
-        state: 'wait_prompt',
+        state: 'wait_content',
         image: null,
       }
     } catch (e: unknown) {
@@ -132,14 +141,13 @@
       state.story_entries[0] = {
         id: 0,
         speaker: '',
-        content: '',
-        state: 'wait_prompt',
+        content: template({
+          user: 'Julien',
+          char: state.selected_char.info.name,
+        }),
+        state: 'wait_content',
         image: null,
       }
-      state.story_entries[0].content = template({
-        user: 'Juliean',
-        char: state.selected_char.info.name,
-      })
       state.story_entries[0].speaker = state.selected_char.info.name
     }
   }

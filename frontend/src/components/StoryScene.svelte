@@ -43,6 +43,7 @@
   }
 
   async function generate_initial_image() {
+    if (entry.state === 'no_image' || entry.state === 'wait_content') return
     entry.state = 'wait_prompt'
     const { prompt, width, height } = await generate_prompt(entry.content, prev_prompt)
     entry.width = width
@@ -59,23 +60,25 @@
 </script>
 
 <div class="story-scene">
-  <div
-    class={width > height ? 'scene-image-wide' : 'scene-image'}
-    style="--image-width: {width}px; --image-height: {height}px;"
-  >
-    {#if entry.state === 'wait_prompt'}
-      <div class="image-placeholder">
-        <div class="spinner_square"></div>
-      </div>
-    {:else if entry.state === 'wait_image'}
-      <div class="image-placeholder">
-        <div class="spinner_circle"></div>
-      </div>
-    {/if}
-    {#if entry.state !== 'no_image' && entry.image}
-      <img src={entry.image} alt="Scene visualization" />
-    {/if}
-  </div>
+  {#if entry.state !== 'no_image'}
+    <div
+      class={width > height ? 'scene-image-wide' : 'scene-image'}
+      style="--image-width: {width}px; --image-height: {height}px;"
+    >
+      {#if entry.state === 'wait_prompt' || entry.state === 'wait_content'}
+        <div class="image-placeholder">
+          <div class="spinner_square"></div>
+        </div>
+      {:else if entry.state === 'wait_image'}
+        <div class="image-placeholder">
+          <div class="spinner_circle"></div>
+        </div>
+      {/if}
+      {#if entry.image}
+        <img src={entry.image} alt="Scene visualization" />
+      {/if}
+    </div>
+  {/if}
   {#if entry.speaker}
     <span class="speaker">{entry.speaker}:</span>
   {/if}
@@ -107,6 +110,7 @@
     font-family: 'Segoe UI', Georgia, 'Times New Roman', Times, serif;
     font-size: 1.1rem;
     color: theme('colors.neutral.600');
+    padding: 0 0.5rem;
   }
 
   .story-scene :global p {

@@ -2,7 +2,7 @@ export interface StoryEntry {
   id: number
   speaker: string
   content: string
-  state: 'wait_prompt' | 'wait_image' | 'image' | 'no_image'
+  state: 'wait_content' | 'wait_prompt' | 'wait_image' | 'image' | 'no_image'
   image: string | null
   width?: number
   height?: number
