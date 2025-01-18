@@ -15,6 +15,7 @@
   function highlightQuotes(content: string) {
     let markedContent = marked(content, { async: false })
     markedContent = markedContent.replace(/"([^"]+)"/g, '<span class="quoted-text">"$1"</span>')
+    markedContent = markedContent.replace(/“([^”]+)”/g, '<span class="quoted-text">"$1"</span>')
     return markedContent.replace(/&quot;(.+?)&quot;/g, '<span class="quoted-text">"$1"</span>')
   }
 
@@ -38,19 +39,18 @@
 
   async function save_entry() {
     toggle_edit_mode()
-    const { prompt, width, height } = await generate_prompt(entry.content, prev_prompt)
-    entry.image_prompt = prompt
-    entry.image = await generate_image(prompt, width, height)
+    await generate_initial_image()
   }
 
   async function generate_initial_image() {
-    entry.image = 'wait_prompt'
+    entry.state = 'wait_prompt'
     const { prompt, width, height } = await generate_prompt(entry.content, prev_prompt)
     entry.width = width
     entry.height = height
     entry.image_prompt = prompt
-    entry.image = 'wait_image'
+    entry.state = 'wait_image'
     entry.image = await generate_image(prompt, width, height)
+    entry.state = 'image'
   }
 
   onMount(async () => {
@@ -59,24 +59,23 @@
 </script>
 
 <div class="story-scene">
-  {#if entry.image}
-    <div
-      class={width > height ? 'scene-image-wide' : 'scene-image'}
-      style="--image-width: {width}px; --image-height: {height}px;"
-    >
-      {#if entry.image === 'wait_prompt' || entry.image === 'wait_image'}
-        <div class="image-placeholder">
-          {#if entry.image === 'wait_prompt'}
-            <div class="spinner_square"></div>
-          {:else}
-            <div class="spinner_circle"></div>
-          {/if}
-        </div>
-      {:else}
-        <img src={entry.image} alt="Scene visualization" />
-      {/if}
-    </div>
-  {/if}
+  <div
+    class={width > height ? 'scene-image-wide' : 'scene-image'}
+    style="--image-width: {width}px; --image-height: {height}px;"
+  >
+    {#if entry.state === 'wait_prompt'}
+      <div class="image-placeholder">
+        <div class="spinner_square"></div>
+      </div>
+    {:else if entry.state === 'wait_image'}
+      <div class="image-placeholder">
+        <div class="spinner_circle"></div>
+      </div>
+    {/if}
+    {#if entry.state !== 'no_image' && entry.image}
+      <img src={entry.image} alt="Scene visualization" />
+    {/if}
+  </div>
   {#if entry.speaker}
     <span class="speaker">{entry.speaker}:</span>
   {/if}
@@ -119,17 +118,23 @@
   }
 
   .scene-image {
+    position: relative;
     float: left;
     width: calc(var(--image-width) * 0.45);
     height: calc(var(--image-height) * 0.45);
     margin: 0 1rem 0.5rem 0;
+    background: theme('colors.zinc.100');
+    border-radius: 8px;
   }
 
   .scene-image-wide {
+    position: relative;
     width: calc(var(--image-width) * 0.6);
     height: calc(var(--image-height) * 0.6);
     float: none;
     margin: 0 auto 0.5rem auto;
+    background: theme('colors.zinc.100');
+    border-radius: 8px;
   }
 
   .scene-image img {
@@ -145,13 +150,16 @@
   }
 
   .image-placeholder {
+    position: absolute;
+    top: 0;
+    left: 0;
     width: 100%;
     height: 100%;
-    background-color: #f0f0f0;
-    border-radius: 8px;
     display: flex;
-    align-items: center;
-    justify-content: center;
+    padding: 1rem;
+    justify-content: end;
+    align-items: end;
+    z-index: 1;
   }
 
   .spinner_square {

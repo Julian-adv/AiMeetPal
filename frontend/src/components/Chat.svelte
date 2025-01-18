@@ -10,6 +10,7 @@
     id: 0,
     speaker: '',
     content: '',
+    state: 'wait_prompt',
     image: null,
   }
   let user_name = 'Julien'
@@ -92,7 +93,8 @@
       id: 0,
       speaker: state.selected_char?.info.name || 'AI',
       content: '',
-      image: 'wait_prompt',
+      state: 'wait_prompt',
+      image: null,
     }
     error = null
 
@@ -103,6 +105,7 @@
           id: nextId++,
           speaker: 'Julien',
           content: chatInputValue,
+          state: 'no_image',
           image: null,
         },
       ]
@@ -113,7 +116,8 @@
         id: 0,
         speaker: state.selected_char?.info.name || 'AI',
         content: '',
-        image: 'wait_prompt',
+        state: 'wait_prompt',
+        image: null,
       }
     } catch (e: unknown) {
       error = e instanceof Error ? e.message : 'An unknown error occurred'
@@ -129,6 +133,7 @@
         id: 0,
         speaker: '',
         content: '',
+        state: 'wait_prompt',
         image: null,
       }
       state.story_entries[0].content = template({
