@@ -1,6 +1,4 @@
 <script lang="ts">
-  import { Icon } from '@steeze-ui/svelte-icon'
-  import CharacterList from './CharacterList.svelte'
   import type { TabItem } from '../types/tab'
 
   interface Props {
@@ -38,7 +36,7 @@
           onclick={handle_click(item.value)}
           onkeydown={handle_keydown(item.value)}
         >
-          <Icon src={item.icon} width="24" height="24" class={active_class(item.value)} />
+          <item.icon width="24" height="24" class={active_class(item.value)} />
           {item.label}
         </button>
       {/each}

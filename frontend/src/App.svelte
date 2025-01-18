@@ -3,10 +3,10 @@
   import Chat from './components/Chat.svelte'
   import Settings from './components/Settings.svelte'
   import Tabs from './components/Tabs.svelte'
-  import { UserGroup, ChatBubbleLeftRight, WrenchScrewdriver } from '@steeze-ui/heroicons'
+  import { Users, ChatBubbleLeftRight, WrenchScrewdriver } from 'svelte-heros-v2'
 
   let tab_items = [
-    { label: 'Characters', icon: UserGroup, value: 1, component: CharacterList },
+    { label: 'Characters', icon: Users, value: 1, component: CharacterList },
     { label: 'Chat', icon: ChatBubbleLeftRight, value: 2, component: Chat },
     { label: 'Settings', icon: WrenchScrewdriver, value: 3, component: Settings },
   ]

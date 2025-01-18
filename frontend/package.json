@@ -12,12 +12,11 @@
     "format:check": "prettier --check ."
   },
   "devDependencies": {
-    "@steeze-ui/heroicons": "^2.2.0",
-    "@steeze-ui/svelte-icon": "^1.6.2",
     "@sveltejs/vite-plugin-svelte": "^5.0.3",
     "@tsconfig/svelte": "^5.0.4",
     "@types/node": "^22.10.5",
     "autoprefixer": "^10.4.17",
+    "flowbite-svelte-icons": "^2.0.2",
     "handlebars": "^4.7.8",
     "postcss": "^8.4.33",
     "postcss-import": "^16.1.0",
@@ -26,6 +25,7 @@
     "svelte": "^5.15.0",
     "svelte-5-ui-lib": "^0.12.2",
     "svelte-check": "^4.1.1",
+    "svelte-heros-v2": "^2.0.1",
     "svelte-preprocess": "^6.0.3",
     "tailwindcss": "^3.4.1",
     "typescript": "^5.7.2",

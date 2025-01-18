@@ -84,75 +84,6 @@
     }
   }
 
-  async function scene_to_prompt(text: string, prev_image_prompt: string) {
-    const response = await fetch('http://localhost:5000/api/scene-to-prompt', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ content: text, prev_image_prompt: prev_image_prompt }),
-    })
-    const data = await response.json()
-    return data.prompt
-  }
-
-  async function generate_image(text: string, width: number, height: number) {
-    const response = await fetch('http://localhost:5000/api/generate-image', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        prompt: text,
-        guidance_scale: 4.5,
-        width: width * 1,
-        height: height * 1,
-        face_steps: 20,
-      }),
-    })
-    const data = await response.json()
-    const image = data.image
-    return image
-  }
-
-  function image_size(prompt: string) {
-    const portrait = !!prompt.match(/format:\s*portrait/i)
-    if (portrait) {
-      return { width: 832, height: 1216 }
-    } else {
-      return { width: 1216, height: 832 }
-    }
-  }
-
-  async function generate_last_image() {
-    const last_index = state.story_entries.length - 1
-    state.story_entries[last_index].image = 'wait_prompt'
-    let prev_image_prompt = 'character appearance: blonde\nenvironment: living room'
-    if (last_index > 0) {
-      const prevEntry = state.story_entries[last_index - 1]
-      if (prevEntry.image_prompt) {
-        prev_image_prompt = prevEntry.image_prompt
-      }
-    } else {
-      if (state.selected_char?.info.description) {
-        const template = Handlebars.compile(state.selected_char.info.description)
-        prev_image_prompt = template({ char: state.selected_char.info.name, user: 'Julien' })
-      }
-    }
-    let prompt = await scene_to_prompt(state.story_entries[last_index].content, prev_image_prompt)
-    if (!prompt) {
-      prompt = state.story_entries[last_index].content
-    }
-    state.story_entries[last_index].image = 'wait_image'
-    const prefix = 'score_9, score_8_up, score_7_up'
-    const { width, height } = image_size(prompt)
-    state.story_entries[last_index].width = width
-    state.story_entries[last_index].height = height
-    const image = await generate_image(`${prefix}, ${prompt}`, width, height)
-    state.story_entries[last_index].image = image
-    state.story_entries[last_index].image_prompt = prompt
-  }
-
   async function handleChat(event: KeyboardEvent) {
     if (event.key !== 'Enter') return
     if (!chatInputValue.trim()) return
@@ -184,7 +115,6 @@
         content: '',
         image: 'wait_prompt',
       }
-      await generate_last_image()
     } catch (e: unknown) {
       error = e instanceof Error ? e.message : 'An unknown error occurred'
     } finally {
@@ -207,7 +137,17 @@
       })
       state.story_entries[0].speaker = state.selected_char.info.name
     }
-    await generate_last_image()
+  }
+
+  function get_prev_prompt(i: number) {
+    if (i > 0) {
+      return state.story_entries[i - 1].image_prompt ?? ''
+    }
+    if (state.selected_char?.info.description) {
+      const template = Handlebars.compile(state.selected_char.info.description)
+      return template({ char: state.selected_char.info.name, user: 'Julien' })
+    }
+    return 'character appearance: blonde\nenvironment: living room'
   }
 
   onMount(async () => {
@@ -218,12 +158,12 @@
 
 <div class="chat-container">
   <div class="story">
-    {#each state.story_entries as entry (entry.id)}
-      <StoryScene {entry} />
+    {#each state.story_entries as entry, i (entry.id)}
+      <StoryScene {entry} prev_prompt={get_prev_prompt(i)} />
     {/each}
 
     {#if currentEntry.content}
-      <StoryScene entry={currentEntry} />
+      <StoryScene entry={currentEntry} prev_prompt={get_prev_prompt(state.story_entries.length)} />
     {/if}
   </div>
 

@@ -1,16 +1,61 @@
 <script lang="ts">
   import { marked } from 'marked'
   import type { StoryEntry } from '../types/story'
+  import { Button } from 'svelte-5-ui-lib'
+  import { PencilSquare } from 'svelte-heros-v2'
+  import { generate_image, generate_prompt } from '../lib/generate_image.svelte'
+  import { onMount } from 'svelte'
 
-  let { entry }: { entry: StoryEntry } = $props()
+  let { entry, prev_prompt }: { entry: StoryEntry; prev_prompt: string } = $props()
   let width = $derived(entry.width ?? 832)
   let height = $derived(entry.height ?? 1216)
+  let edit_mode = $state(false)
+  let edit_textarea: HTMLTextAreaElement | null = $state(null)
 
   function highlightQuotes(content: string) {
     let markedContent = marked(content, { async: false })
     markedContent = markedContent.replace(/"([^"]+)"/g, '<span class="quoted-text">"$1"</span>')
     return markedContent.replace(/&quot;(.+?)&quot;/g, '<span class="quoted-text">"$1"</span>')
   }
+
+  function adjust_height() {
+    if (edit_textarea) {
+      edit_textarea.style.height = 'auto'
+      edit_textarea.style.height = edit_textarea.scrollHeight + 1 + 'px'
+    }
+  }
+
+  const toggle_edit_mode = () => {
+    edit_mode = !edit_mode
+    setTimeout(() => {
+      adjust_height()
+    }, 10)
+  }
+
+  function on_input(this: HTMLElement, ev: Event) {
+    adjust_height()
+  }
+
+  async function save_entry() {
+    toggle_edit_mode()
+    const { prompt, width, height } = await generate_prompt(entry.content, prev_prompt)
+    entry.image_prompt = prompt
+    entry.image = await generate_image(prompt, width, height)
+  }
+
+  async function generate_initial_image() {
+    entry.image = 'wait_prompt'
+    const { prompt, width, height } = await generate_prompt(entry.content, prev_prompt)
+    entry.width = width
+    entry.height = height
+    entry.image_prompt = prompt
+    entry.image = 'wait_image'
+    entry.image = await generate_image(prompt, width, height)
+  }
+
+  onMount(async () => {
+    await generate_initial_image()
+  })
 </script>
 
 <div class="story-scene">
@@ -35,7 +80,23 @@
   {#if entry.speaker}
     <span class="speaker">{entry.speaker}:</span>
   {/if}
-  {@html highlightQuotes(entry.content)}
+  {#if edit_mode}
+    <textarea
+      bind:this={edit_textarea}
+      bind:value={entry.content}
+      class="p-2 rounded border border-gray-300 outline-none w-full block clear-both text-base h-auto"
+      oninput={on_input}
+    ></textarea>
+    <Button class="m-2" onclick={save_entry}>Save</Button>
+  {:else}
+    {@html highlightQuotes(entry.content)}
+    <Button
+      color="light"
+      size="xs"
+      class="p-1 m-[-0.5rem] border-none text-neutral-400 focus:ring-0"
+      onclick={toggle_edit_mode}><PencilSquare size="20" /></Button
+    >
+  {/if}
 </div>
 
 <style>
