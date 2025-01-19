@@ -1,7 +1,7 @@
 <script lang="ts">
   import { marked } from 'marked'
   import type { StoryEntry } from '../types/story'
-  import { Button } from 'svelte-5-ui-lib'
+  import { Button, Popover } from 'svelte-5-ui-lib'
   import { PencilSquare, ArrowPath, Camera } from 'svelte-heros-v2'
   import { generate_image, generate_prompt } from '../lib/generate_image.svelte'
 
@@ -9,7 +9,9 @@
     entry,
     prev_prompt,
     regenerate_content,
-  }: { entry: StoryEntry; prev_prompt: string; regenerate_content: () => void } = $props()
+    index,
+  }: { entry: StoryEntry; prev_prompt: string; regenerate_content: () => void; index: number } =
+    $props()
   let width = $derived(entry.width ?? 832)
   let height = $derived(entry.height ?? 1216)
   let edit_mode = $state(false)
@@ -69,6 +71,7 @@
 <div class="story-scene">
   {#if entry.state !== 'no_image'}
     <div
+      id="scene-image{index}"
       class={width > height ? 'scene-image-wide' : 'scene-image'}
       style="--image-width: {width}px; --image-height: {height}px;"
     >
@@ -85,6 +88,9 @@
         <img src={entry.image} alt="Scene visualization" />
       {/if}
     </div>
+    <Popover class="text-sm p-2 w-[50%] z-20" triggeredBy="#scene-image{index}" position="bottom"
+      >{entry.image_prompt ?? 'Waiting for prompt...'}</Popover
+    >
   {/if}
   {#if entry.speaker}
     <span class="speaker">{entry.speaker}:</span>
@@ -100,23 +106,31 @@
   {:else}
     {@html highlightQuotes(entry.content)}
     <Button
+      id="edit_content{index}"
       color="light"
       size="xs"
       class="p-1 ml-[-0.5rem] mt-[-0.5rem] border-none text-neutral-400 focus:ring-0"
       onclick={toggle_edit_mode}><PencilSquare size="20" /></Button
     >
+    <Popover triggeredBy="#edit_content{index}" class="text-sm p-2">Edit content</Popover>
     {#if entry.state !== 'no_image'}
       <Button
+        id="regenerate_image{index}"
         color="light"
         size="xs"
         class="p-1 mt-[-0.5rem] border-none text-neutral-400 focus:ring-0"
         onclick={regenerate_image}><Camera size="20" /></Button
       >
+      <Popover triggeredBy="#regenerate_image{index}" class="text-sm p-2">Regenerate image</Popover>
       <Button
+        id="regenerate_content{index}"
         color="light"
         size="xs"
         class="p-1 mt-[-0.5rem] border-none text-neutral-400 focus:ring-0"
         onclick={regenerate_content}><ArrowPath size="20" /></Button
+      >
+      <Popover triggeredBy="#regenerate_content{index}" class="text-sm p-2"
+        >Regenerate content</Popover
       >
     {/if}
   {/if}

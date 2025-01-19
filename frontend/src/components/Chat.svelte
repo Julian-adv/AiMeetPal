@@ -1,9 +1,11 @@
 <script lang="ts">
-  import type { StoryEntry, StoryEntries } from '../types/story'
+  import type { StoryEntries } from '../types/story'
   import StoryScene from './StoryScene.svelte'
   import { state } from '../lib/state.svelte'
   import { onMount } from 'svelte'
   import Handlebars from 'handlebars'
+  import { Button, Popover } from 'svelte-5-ui-lib'
+  import { ArrowUturnLeft } from 'svelte-heros-v2'
 
   let nextId = 1
   let user_name = 'Julien'
@@ -155,6 +157,11 @@
     }
   }
 
+  const go_back = () => {
+    chatInputValue = state.story_entries[state.story_entries.length - 2].content
+    state.story_entries = state.story_entries.slice(0, state.story_entries.length - 2)
+  }
+
   onMount(async () => {
     await start_chat()
     chatInputElement?.focus()
@@ -168,10 +175,23 @@
         {entry}
         prev_prompt={get_prev_prompt(i)}
         regenerate_content={regenerate_content(i)}
+        index={i}
       />
     {/each}
   </div>
 
+  <div class="flex justify-start">
+    <Button
+      id="go_back"
+      color="light"
+      size="sm"
+      class="px-3 py-2 text-neutral-500 hover:border-neutral-300"
+      onclick={go_back}><ArrowUturnLeft size="20" /></Button
+    >
+    <Popover triggeredBy="#go_back" class="text-sm p-2"
+      >Go back to the previous step in the conversation</Popover
+    >
+  </div>
   <div class="chat-input-container">
     <span class="user-name">{user_name}:</span>
     <input
@@ -196,6 +216,7 @@
     display: flex;
     align-items: center;
     gap: 0.5rem;
+    margin-top: 1rem;
   }
 
   .user-name {
