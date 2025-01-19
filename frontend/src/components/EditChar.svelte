@@ -19,6 +19,9 @@
     if (!state.selected_char) return
 
     try {
+      if (!file_name.endsWith('.card')) {
+        file_name = file_name + '.card'
+      }
       const response = await fetch('http://localhost:5000/api/save-char', {
         method: 'POST',
         headers: {

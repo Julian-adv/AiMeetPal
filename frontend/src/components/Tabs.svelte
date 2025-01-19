@@ -24,7 +24,7 @@
   }
 </script>
 
-<div class="tabs-container" style="--max-width: {902}px">
+<div class="tabs-container" style="--max-width: {906}px">
   <div class="tabs" role="tablist">
     <div class="tab-list-container">
       {#each tab_items as item}

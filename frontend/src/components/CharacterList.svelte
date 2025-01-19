@@ -49,6 +49,7 @@
           <h3>{character.info.name}</h3>
           <p>{removeHtmlTags(character.info.personality)}</p>
         </div>
+        <div class="filename-container"><div class="filename">{character.id}</div></div>
       </div>
     {/each}
   </div>
@@ -56,7 +57,7 @@
 
 <style lang="postcss">
   .character-list {
-    padding: 0rem;
+    padding: 2px;
     background: rgba(255, 255, 255, 0.05);
     border-radius: 8px;
     margin-bottom: 1rem;
@@ -64,7 +65,7 @@
 
   .character-grid {
     display: grid;
-    max-width: 902px;
+    max-width: var(--max-width);
     grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
     gap: 0.5rem;
   }
@@ -73,7 +74,7 @@
     cursor: pointer;
     padding: 0rem;
     border-radius: 8px;
-    background: theme('colors.zinc.200');
+    background: theme('colors.zinc.50');
     transition: all 0.2s ease;
     border: 1px solid theme('colors.zinc.300');
     @apply shadow-md;
@@ -88,6 +89,7 @@
   .character-card.selected {
     background: rgba(100, 149, 237, 0.3);
     border-color: theme('colors.blue.500');
+    @apply ring-2;
   }
 
   .character-card img {
@@ -100,23 +102,39 @@
 
   .character-info {
     padding: 0.5rem;
+    height: 8rem;
+    overflow: hidden;
   }
 
   .character-card h3 {
     text-align: center;
-    font-size: 1rem;
+    font-size: 0.9rem;
     font-weight: bold;
     color: theme('colors.gray.800');
   }
 
   .character-card p {
-    text-align: center;
-    font-size: 0.9rem;
+    text-align: left;
+    font-size: 0.8rem;
     color: theme('colors.gray.500');
-    display: -webkit-box;
-    -webkit-line-clamp: 3;
-    line-clamp: 3;
-    -webkit-box-orient: vertical;
+  }
+
+  .filename-container {
+    border-top: 1px solid theme('colors.zinc.300');
+    background: theme('colors.zinc.200');
+    height: 3rem;
+    border-radius: 0 0 8px 8px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    margin-top: 0.5rem;
+    padding: 0.2rem;
+  }
+
+  .filename {
+    font-size: 0.8rem;
+    color: theme('colors.gray.600');
     overflow: hidden;
   }
 </style>
