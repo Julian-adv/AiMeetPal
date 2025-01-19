@@ -4,7 +4,6 @@
   import { Button } from 'svelte-5-ui-lib'
   import { PencilSquare } from 'svelte-heros-v2'
   import { generate_image, generate_prompt } from '../lib/generate_image.svelte'
-  import { onMount } from 'svelte'
 
   let { entry, prev_prompt }: { entry: StoryEntry; prev_prompt: string } = $props()
   let width = $derived(entry.width ?? 832)
@@ -43,19 +42,19 @@
   }
 
   async function generate_initial_image() {
-    if (entry.state === 'no_image' || entry.state === 'wait_content') return
-    entry.state = 'wait_prompt'
     const { prompt, width, height } = await generate_prompt(entry.content, prev_prompt)
+    entry.state = 'wait_image'
     entry.width = width
     entry.height = height
     entry.image_prompt = prompt
-    entry.state = 'wait_image'
     entry.image = await generate_image(prompt, width, height)
     entry.state = 'image'
   }
 
-  onMount(async () => {
-    await generate_initial_image()
+  $effect(() => {
+    if (entry.state === 'wait_prompt') {
+      generate_initial_image()
+    }
   })
 </script>
 

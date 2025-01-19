@@ -137,17 +137,18 @@
   async function start_chat() {
     if (state.selected_char) {
       const template = Handlebars.compile(state.selected_char.info.first_mes)
-      state.story_entries = []
-      state.story_entries[0] = {
-        id: 0,
-        speaker: '',
-        content: template({
-          user: 'Julien',
-          char: state.selected_char.info.name,
-        }),
-        state: 'wait_content',
-        image: null,
-      }
+      state.story_entries = [
+        {
+          id: 0,
+          speaker: '',
+          content: template({
+            user: 'Julien',
+            char: state.selected_char.info.name,
+          }),
+          state: 'wait_prompt',
+          image: null,
+        },
+      ]
       state.story_entries[0].speaker = state.selected_char.info.name
     }
   }
