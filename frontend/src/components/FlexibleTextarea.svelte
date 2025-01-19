@@ -7,7 +7,7 @@
   function adjust_height() {
     if (textarea) {
       textarea.style.height = 'auto'
-      textarea.style.height = textarea.scrollHeight + 1 + 'px'
+      textarea.style.height = Math.min(textarea.scrollHeight + 1, 500) + 'px'
     }
   }
 

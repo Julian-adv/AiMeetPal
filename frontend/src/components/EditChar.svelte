@@ -13,6 +13,7 @@
     first_mes: '',
     mes_example: '',
   }
+  let file_name = ''
 
   const save_char = async () => {
     if (!state.selected_char) return
@@ -24,7 +25,7 @@
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          file_name: state.selected_char.id,
+          file_name: file_name,
           image: state.selected_char.image.split(',')[1], // Remove data:image/png;base64, prefix
           name: info.name,
           description: info.description,
@@ -50,6 +51,7 @@
   onMount(() => {
     if (state.selected_char) {
       info = state.selected_char.info
+      file_name = state.selected_char.id
     }
   })
 </script>
@@ -65,7 +67,13 @@
   <div class="label">Description</div>
   <div><FlexibleTextarea bind:value={info.description} /></div>
   <div class="label">Personality</div>
-  <div><FlexibleTextarea bind:value={info.personality} /></div>
+  <div>
+    <FlexibleTextarea bind:value={info.personality} />
+    <h3>Preview</h3>
+    <div class="preview">
+      {@html info.personality}
+    </div>
+  </div>
   <div class="label">Scenario</div>
   <div><FlexibleTextarea bind:value={info.scenario} /></div>
   <div class="label">Message example</div>
@@ -74,8 +82,12 @@
   <div>
     <FlexibleTextarea bind:value={info.first_mes} />
     <h3>Preview</h3>
-    {@html highlightQuotes(info.first_mes)}
+    <div class="preview">
+      {@html highlightQuotes(info.first_mes)}
+    </div>
   </div>
+  <div class="label">File name</div>
+  <div><Input bind:value={file_name} /></div>
 </div>
 <Button color="primary" class="m-3 mx-auto" onclick={save_char}>Save</Button>
 
@@ -97,6 +109,7 @@
   .label {
     justify-self: end;
     color: theme('colors.neutral.500');
+    margin-top: 0.45rem;
   }
 
   .edit-char-container img {
@@ -115,5 +128,13 @@
 
   .edit-char-container :global .quoted-text {
     color: theme('colors.blue.800');
+  }
+
+  .preview {
+    padding: 0.5rem;
+    border: 1px solid theme('colors.zinc.300');
+    border-radius: 8px;
+    height: 500px;
+    overflow: auto;
   }
 </style>
