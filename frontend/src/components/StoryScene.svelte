@@ -1,9 +1,9 @@
 <script lang="ts">
-  import { marked } from 'marked'
   import type { StoryEntry } from '../types/story'
   import { Button, Popover } from 'svelte-5-ui-lib'
   import { PencilSquare, ArrowPath, Camera } from 'svelte-heros-v2'
   import { generate_image, generate_prompt } from '../lib/generate_image.svelte'
+  import { highlightQuotes } from '../lib/util'
 
   let {
     entry,
@@ -16,13 +16,6 @@
   let height = $derived(entry.height ?? 1216)
   let edit_mode = $state(false)
   let edit_textarea: HTMLTextAreaElement | null = $state(null)
-
-  function highlightQuotes(content: string) {
-    let markedContent = marked(content, { async: false })
-    markedContent = markedContent.replace(/"([^"]+)"/g, '<span class="quoted-text">"$1"</span>')
-    markedContent = markedContent.replace(/“([^”]+)”/g, '<span class="quoted-text">"$1"</span>')
-    return markedContent.replace(/&quot;(.+?)&quot;/g, '<span class="quoted-text">"$1"</span>')
-  }
 
   function adjust_height() {
     if (edit_textarea) {

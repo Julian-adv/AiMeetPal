@@ -1,14 +1,16 @@
 <script lang="ts">
   import CharacterList from './components/CharacterList.svelte'
   import Chat from './components/Chat.svelte'
+  import EditChar from './components/EditChar.svelte'
   import Settings from './components/Settings.svelte'
   import Tabs from './components/Tabs.svelte'
-  import { Users, ChatBubbleLeftRight, WrenchScrewdriver } from 'svelte-heros-v2'
+  import { Users, ChatBubbleLeftRight, WrenchScrewdriver, UserPlus } from 'svelte-heros-v2'
 
   let tab_items = [
     { label: 'Characters', icon: Users, value: 1, component: CharacterList },
     { label: 'Chat', icon: ChatBubbleLeftRight, value: 2, component: Chat },
-    { label: 'Settings', icon: WrenchScrewdriver, value: 3, component: Settings },
+    { label: 'Edit char', icon: UserPlus, value: 3, component: EditChar },
+    { label: 'Settings', icon: WrenchScrewdriver, value: 4, component: Settings },
   ]
   let active_tab_value = 1
   let prompt = ''

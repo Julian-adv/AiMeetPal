@@ -54,7 +54,7 @@
   </div>
 </div>
 
-<style>
+<style lang="postcss">
   .character-list {
     padding: 0rem;
     background: rgba(255, 255, 255, 0.05);
