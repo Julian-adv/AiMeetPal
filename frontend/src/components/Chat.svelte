@@ -6,13 +6,6 @@
   import Handlebars from 'handlebars'
 
   let nextId = 1
-  let currentEntry: StoryEntry = {
-    id: 0,
-    speaker: '',
-    content: '',
-    state: 'wait_content',
-    image: null,
-  }
   let user_name = 'Julien'
   let chatInputElement: HTMLInputElement
   let chatInputValue = ''
@@ -23,23 +16,20 @@
       /<\|start_header_id\|>writer character: (.*?)<\|end_header_id\|>\s*([^\s]+)$/
     )
     if (match) {
-      currentEntry.speaker = match[1]
+      state.story_entries[state.story_entries.length - 1].speaker = match[1]
       return match[2]
     }
     return text
   }
 
   function received_text(text: string) {
-    if (currentEntry.speaker === '') {
-      currentEntry = {
-        ...currentEntry,
-        content: formatResponse(currentEntry.content + text),
-      }
+    if (state.story_entries[state.story_entries.length - 1].speaker === '') {
+      state.story_entries[state.story_entries.length - 1].content = formatResponse(
+        state.story_entries[state.story_entries.length - 1].content + text
+      )
     } else {
-      currentEntry = {
-        ...currentEntry,
-        content: currentEntry.content + text,
-      }
+      state.story_entries[state.story_entries.length - 1].content =
+        state.story_entries[state.story_entries.length - 1].content + text
     }
   }
 
@@ -95,13 +85,6 @@
     if (event.key !== 'Enter') return
     if (!chatInputValue.trim()) return
 
-    currentEntry = {
-      id: 0,
-      speaker: state.selected_char?.info.name || 'AI',
-      content: '',
-      state: 'wait_content',
-      image: null,
-    }
     error = null
 
     try {
@@ -114,20 +97,17 @@
           state: 'no_image',
           image: null,
         },
+        {
+          id: nextId++,
+          speaker: state.selected_char?.info.name ?? 'AI',
+          content: '',
+          state: 'wait_content',
+          image: null,
+        },
       ]
       chatInputValue = ''
       await send_chat(state.story_entries, received_text)
-      state.story_entries = [
-        ...state.story_entries,
-        { ...currentEntry, id: nextId++, state: 'wait_prompt' },
-      ]
-      currentEntry = {
-        id: 0,
-        speaker: state.selected_char?.info.name || 'AI',
-        content: '',
-        state: 'wait_content',
-        image: null,
-      }
+      state.story_entries[state.story_entries.length - 1].state = 'wait_prompt'
     } catch (e: unknown) {
       error = e instanceof Error ? e.message : 'An unknown error occurred'
     } finally {
@@ -164,6 +144,17 @@
     return 'character appearance: blonde\nenvironment: living room'
   }
 
+  function regenerate_content(i: number) {
+    return async () => {
+      if (i === state.story_entries.length - 1) {
+        state.story_entries[state.story_entries.length - 1].content = ''
+        state.story_entries[state.story_entries.length - 1].state = 'wait_content'
+        await send_chat(state.story_entries, received_text)
+        state.story_entries[state.story_entries.length - 1].state = 'wait_prompt'
+      }
+    }
+  }
+
   onMount(async () => {
     await start_chat()
     chatInputElement?.focus()
@@ -173,12 +164,12 @@
 <div class="chat-container">
   <div class="story">
     {#each state.story_entries as entry, i (entry.id)}
-      <StoryScene {entry} prev_prompt={get_prev_prompt(i)} />
+      <StoryScene
+        {entry}
+        prev_prompt={get_prev_prompt(i)}
+        regenerate_content={regenerate_content(i)}
+      />
     {/each}
-
-    {#if currentEntry.content}
-      <StoryScene entry={currentEntry} prev_prompt={get_prev_prompt(state.story_entries.length)} />
-    {/if}
   </div>
 
   <div class="chat-input-container">

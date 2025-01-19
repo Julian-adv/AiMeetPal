@@ -2,10 +2,14 @@
   import { marked } from 'marked'
   import type { StoryEntry } from '../types/story'
   import { Button } from 'svelte-5-ui-lib'
-  import { PencilSquare } from 'svelte-heros-v2'
+  import { PencilSquare, ArrowPath, Camera } from 'svelte-heros-v2'
   import { generate_image, generate_prompt } from '../lib/generate_image.svelte'
 
-  let { entry, prev_prompt }: { entry: StoryEntry; prev_prompt: string } = $props()
+  let {
+    entry,
+    prev_prompt,
+    regenerate_content,
+  }: { entry: StoryEntry; prev_prompt: string; regenerate_content: () => void } = $props()
   let width = $derived(entry.width ?? 832)
   let height = $derived(entry.height ?? 1216)
   let edit_mode = $state(false)
@@ -56,6 +60,10 @@
       generate_initial_image()
     }
   })
+
+  async function regenerate_image() {
+    entry.state = 'wait_prompt'
+  }
 </script>
 
 <div class="story-scene">
@@ -94,9 +102,23 @@
     <Button
       color="light"
       size="xs"
-      class="p-1 m-[-0.5rem] border-none text-neutral-400 focus:ring-0"
+      class="p-1 ml-[-0.5rem] mt-[-0.5rem] border-none text-neutral-400 focus:ring-0"
       onclick={toggle_edit_mode}><PencilSquare size="20" /></Button
     >
+    {#if entry.state !== 'no_image'}
+      <Button
+        color="light"
+        size="xs"
+        class="p-1 mt-[-0.5rem] border-none text-neutral-400 focus:ring-0"
+        onclick={regenerate_image}><Camera size="20" /></Button
+      >
+      <Button
+        color="light"
+        size="xs"
+        class="p-1 mt-[-0.5rem] border-none text-neutral-400 focus:ring-0"
+        onclick={regenerate_content}><ArrowPath size="20" /></Button
+      >
+    {/if}
   {/if}
 </div>
 
@@ -128,6 +150,7 @@
     margin: 0 1rem 0.5rem 0;
     background: theme('colors.zinc.100');
     border-radius: 8px;
+    overflow: hidden;
   }
 
   .scene-image-wide {
@@ -138,6 +161,7 @@
     margin: 0 auto 0.5rem auto;
     background: theme('colors.zinc.100');
     border-radius: 8px;
+    overflow: hidden;
   }
 
   .scene-image img {
