@@ -4,26 +4,29 @@
   import { onMount } from 'svelte'
   import FlexibleTextarea from './FlexibleTextarea.svelte'
   import { highlightQuotes } from '../lib/util'
+  import type { Character } from '../types/character'
 
-  let info = $state({
-    name: '',
-    description: '',
-    personality: '',
-    scenario: '',
-    first_mes: '',
-    mes_example: '',
+  let char: Character = $state({
+    file_name: '',
+    image: '',
+    info: {
+      name: '',
+      description: '',
+      personality: '',
+      scenario: '',
+      first_mes: '',
+      mes_example: '',
+      image_prompt: '',
+    },
   })
-  let file_name = $state('')
-  let generated_image = $state('')
-  let image_prompt = $state('')
   let generating = $state(false)
 
   const save_char = async () => {
     if (!g_state.selected_char) return
 
     try {
-      if (!file_name.endsWith('.card')) {
-        file_name = file_name + '.card'
+      if (!char.file_name.endsWith('.card')) {
+        char.file_name = char.file_name + '.card'
       }
       const response = await fetch('http://localhost:5000/api/save-char', {
         method: 'POST',
@@ -31,14 +34,9 @@
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          file_name: file_name,
-          image: generated_image.split(',')[1], // Remove data:image/png;base64, prefix
-          name: info.name,
-          description: info.description,
-          first_mes: info.first_mes,
-          scenario: info.scenario,
-          personality: info.personality,
-          mes_example: info.mes_example,
+          file_name: char.file_name,
+          image: char.image.split(',')[1], // Remove data:image/png;base64, prefix
+          info: char.info,
         }),
       })
 
@@ -47,7 +45,7 @@
       }
 
       // Update local state
-      g_state.selected_char.info = info
+      g_state.selected_char = char
     } catch (error) {
       console.error('Error saving character:', error)
       alert('Failed to save character')
@@ -55,7 +53,7 @@
   }
 
   const generate_image = async () => {
-    if (!image_prompt.trim()) return
+    if (!char.info.image_prompt.trim()) return
 
     const guidance_scale = 4.5
     const width = 832 * 1
@@ -73,7 +71,7 @@
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          prompt: `${prefix}, ${image_prompt}`,
+          prompt: `${prefix}, ${char.info.image_prompt}`,
           guidance_scale,
           width,
           height,
@@ -87,7 +85,7 @@
         throw new Error(data.detail || 'Failed to generate image')
       }
 
-      generated_image = data.image
+      char.image = data.image
     } catch (e) {
       console.log('error', e)
     } finally {
@@ -104,9 +102,7 @@
 
   onMount(() => {
     if (g_state.selected_char) {
-      info = g_state.selected_char.info
-      file_name = g_state.selected_char.id
-      generated_image = g_state.selected_char.image
+      char = g_state.selected_char
     }
   })
 </script>
@@ -120,39 +116,39 @@
         <div class="spinner_circle"></div>
       </div>
     {/if}
-    <img src={generated_image} alt={info.name} />
+    <img src={char.image} alt={char.info.name} />
   </div>
   <div class="label">Image prompt</div>
   <div>
-    <FlexibleTextarea bind:value={image_prompt} onkeydown={keydown} />
+    <FlexibleTextarea bind:value={char.info.image_prompt} onkeydown={keydown} />
     <Button onclick={generate_image}>Generate (Ctrl+⏎)</Button>
   </div>
   <div class="label">Name</div>
-  <div><Input bind:value={info.name} /></div>
+  <div><Input bind:value={char.info.name} /></div>
   <div class="label">Description</div>
-  <div><FlexibleTextarea bind:value={info.description} /></div>
+  <div><FlexibleTextarea bind:value={char.info.description} /></div>
   <div class="label">Personality</div>
   <div>
-    <FlexibleTextarea bind:value={info.personality} />
+    <FlexibleTextarea bind:value={char.info.personality} />
     <h3>Preview</h3>
     <div class="preview">
-      {@html info.personality}
+      {@html char.info.personality}
     </div>
   </div>
   <div class="label">Scenario</div>
-  <div><FlexibleTextarea bind:value={info.scenario} /></div>
+  <div><FlexibleTextarea bind:value={char.info.scenario} /></div>
   <div class="label">Message example</div>
-  <div><FlexibleTextarea bind:value={info.mes_example} /></div>
+  <div><FlexibleTextarea bind:value={char.info.mes_example} /></div>
   <div class="label">First message</div>
   <div>
-    <FlexibleTextarea bind:value={info.first_mes} />
+    <FlexibleTextarea bind:value={char.info.first_mes} />
     <h3>Preview</h3>
     <div class="preview">
-      {@html highlightQuotes(info.first_mes)}
+      {@html highlightQuotes(char.info.first_mes)}
     </div>
   </div>
   <div class="label">File name</div>
-  <div><Input bind:value={file_name} /></div>
+  <div><Input bind:value={char.file_name} /></div>
 </div>
 <Button color="primary" class="m-3 mx-auto" onclick={save_char}>Save</Button>
 
@@ -197,8 +193,6 @@
 
   .preview {
     padding: 0.5rem;
-    border: 1px solid theme('colors.zinc.300');
-    border-radius: 8px;
     height: 500px;
     overflow: auto;
   }

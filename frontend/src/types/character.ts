@@ -1,5 +1,5 @@
 export interface Character {
-  id: string
+  file_name: string
   image: string
   info: {
     name: string
@@ -8,6 +8,7 @@ export interface Character {
     scenario: string
     personality: string
     mes_example: string
+    image_prompt: string
     [key: string]: any
   }
 }

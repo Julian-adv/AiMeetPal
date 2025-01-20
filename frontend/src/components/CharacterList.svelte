@@ -30,12 +30,14 @@
 <div class="character-list">
   <h2>Choose Your Character</h2>
   <div class="character-grid">
-    {#each characters as character (character.id)}
+    {#each characters as character (character.file_name)}
       <div
         role="button"
         tabindex="0"
-        aria-pressed={g_state.selected_char?.id === character.id}
-        class="character-card {g_state.selected_char?.id === character.id ? 'selected' : ''}"
+        aria-pressed={g_state.selected_char?.file_name === character.file_name}
+        class="character-card {g_state.selected_char?.file_name === character.file_name
+          ? 'selected'
+          : ''}"
         onclick={() => selectCharacter(character)}
         onkeydown={(e) => {
           if (e.key === 'Enter' || e.key === ' ') {
@@ -49,7 +51,7 @@
           <h3>{character.info.name}</h3>
           <p>{removeHtmlTags(character.info.personality)}</p>
         </div>
-        <div class="filename-container"><div class="filename">{character.id}</div></div>
+        <div class="filename-container"><div class="filename">{character.file_name}</div></div>
       </div>
     {/each}
   </div>
