@@ -5,6 +5,7 @@
   import FlexibleTextarea from './FlexibleTextarea.svelte'
   import { highlightQuotes } from '../lib/util'
   import type { Character } from '../types/character'
+  import { ArrowLeft, ArrowRight } from 'svelte-heros-v2'
 
   let char: Character = $state({
     file_name: '',
@@ -100,6 +101,14 @@
     }
   }
 
+  const go_back = () => {
+    generating = false
+  }
+
+  const go_forward = () => {
+    generating = false
+  }
+
   onMount(() => {
     if (g_state.selected_char) {
       char = g_state.selected_char
@@ -116,12 +125,18 @@
         <div class="spinner_circle"></div>
       </div>
     {/if}
-    <img src={char.image} alt={char.info.name} />
+    <div class="flex gap-2 items-end">
+      <img src={char.image} alt={char.info.name} />
+      <Button color="light" size="sm" onclick={go_back} class="p-2"><ArrowLeft size="20" /></Button>
+      <Button color="light" size="sm" onclick={go_forward} class="p-2"
+        ><ArrowRight size="20" /></Button
+      >
+    </div>
   </div>
   <div class="label">Image prompt</div>
   <div>
     <FlexibleTextarea bind:value={char.info.image_prompt} onkeydown={keydown} />
-    <Button onclick={generate_image}>Generate (Ctrl+⏎)</Button>
+    <Button color="light" onclick={generate_image}>Generate (Ctrl+⏎)</Button>
   </div>
   <div class="label">Name</div>
   <div><Input bind:value={char.info.name} /></div>
@@ -157,14 +172,10 @@
     display: grid;
     grid-template-columns: 200px 1fr;
     padding: 0rem;
-    background: rgba(255, 255, 255, 0.05);
     border-radius: 8px;
     margin-bottom: 1rem;
     gap: 1rem;
     text-align: left;
-    font-family: 'Segoe UI', Inter, Georgia, 'Times New Roman', Times, serif;
-    font-size: 1.1rem;
-    color: theme('colors.neutral.600');
   }
 
   .label {
