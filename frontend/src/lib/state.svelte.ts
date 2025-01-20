@@ -6,7 +6,7 @@ interface State {
   story_entries: StoryEntry[]
 }
 
-export const state: State = $state({
+export const g_state: State = $state({
   selected_char: null,
   story_entries: [],
 })

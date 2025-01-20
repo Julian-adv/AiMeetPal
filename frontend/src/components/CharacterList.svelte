@@ -1,7 +1,7 @@
 <script lang="ts">
   import { onMount } from 'svelte'
   import type { Character } from '../types/character'
-  import { state } from '../lib/state.svelte'
+  import { g_state } from '../lib/state.svelte'
 
   let characters: Character[] = []
 
@@ -23,7 +23,7 @@
   }
 
   function selectCharacter(character: Character) {
-    state.selected_char = character
+    g_state.selected_char = character
   }
 </script>
 
@@ -34,8 +34,8 @@
       <div
         role="button"
         tabindex="0"
-        aria-pressed={state.selected_char?.id === character.id}
-        class="character-card {state.selected_char?.id === character.id ? 'selected' : ''}"
+        aria-pressed={g_state.selected_char?.id === character.id}
+        class="character-card {g_state.selected_char?.id === character.id ? 'selected' : ''}"
         onclick={() => selectCharacter(character)}
         onkeydown={(e) => {
           if (e.key === 'Enter' || e.key === ' ') {

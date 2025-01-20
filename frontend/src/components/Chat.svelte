@@ -1,7 +1,7 @@
 <script lang="ts">
   import type { StoryEntries } from '../types/story'
   import StoryScene from './StoryScene.svelte'
-  import { state } from '../lib/state.svelte'
+  import { g_state } from '../lib/state.svelte'
   import { onMount } from 'svelte'
   import Handlebars from 'handlebars'
   import { Button, Popover } from 'svelte-5-ui-lib'
@@ -18,20 +18,20 @@
       /<\|start_header_id\|>writer character: (.*?)<\|end_header_id\|>\s*([^\s]+)$/
     )
     if (match) {
-      state.story_entries[state.story_entries.length - 1].speaker = match[1]
+      g_state.story_entries[g_state.story_entries.length - 1].speaker = match[1]
       return match[2]
     }
     return text
   }
 
   function received_text(text: string) {
-    if (state.story_entries[state.story_entries.length - 1].speaker === '') {
-      state.story_entries[state.story_entries.length - 1].content = formatResponse(
-        state.story_entries[state.story_entries.length - 1].content + text
+    if (g_state.story_entries[g_state.story_entries.length - 1].speaker === '') {
+      g_state.story_entries[g_state.story_entries.length - 1].content = formatResponse(
+        g_state.story_entries[g_state.story_entries.length - 1].content + text
       )
     } else {
-      state.story_entries[state.story_entries.length - 1].content =
-        state.story_entries[state.story_entries.length - 1].content + text
+      g_state.story_entries[g_state.story_entries.length - 1].content =
+        g_state.story_entries[g_state.story_entries.length - 1].content + text
     }
   }
 
@@ -47,7 +47,7 @@
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ info: state.selected_char?.info, entries: chatEntries }),
+      body: JSON.stringify({ info: g_state.selected_char?.info, entries: chatEntries }),
     })
 
     if (!response.ok) {
@@ -90,8 +90,8 @@
     error = null
 
     try {
-      state.story_entries = [
-        ...state.story_entries,
+      g_state.story_entries = [
+        ...g_state.story_entries,
         {
           id: nextId++,
           speaker: 'Julien',
@@ -101,15 +101,15 @@
         },
         {
           id: nextId++,
-          speaker: state.selected_char?.info.name ?? 'AI',
+          speaker: g_state.selected_char?.info.name ?? 'AI',
           content: '',
           state: 'wait_content',
           image: null,
         },
       ]
       chatInputValue = ''
-      await send_chat(state.story_entries, received_text)
-      state.story_entries[state.story_entries.length - 1].state = 'wait_prompt'
+      await send_chat(g_state.story_entries, received_text)
+      g_state.story_entries[g_state.story_entries.length - 1].state = 'wait_prompt'
     } catch (e: unknown) {
       error = e instanceof Error ? e.message : 'An unknown error occurred'
     } finally {
@@ -117,49 +117,49 @@
   }
 
   async function start_chat() {
-    if (state.selected_char) {
-      const template = Handlebars.compile(state.selected_char.info.first_mes)
-      state.story_entries = [
+    if (g_state.selected_char) {
+      const template = Handlebars.compile(g_state.selected_char.info.first_mes)
+      g_state.story_entries = [
         {
           id: 0,
           speaker: '',
           content: template({
             user: 'Julien',
-            char: state.selected_char.info.name,
+            char: g_state.selected_char.info.name,
           }),
           state: 'wait_prompt',
           image: null,
         },
       ]
-      state.story_entries[0].speaker = state.selected_char.info.name
+      g_state.story_entries[0].speaker = g_state.selected_char.info.name
     }
   }
 
   function get_prev_prompt(i: number) {
     if (i > 0) {
-      return state.story_entries[i - 1].image_prompt ?? ''
+      return g_state.story_entries[i - 1].image_prompt ?? ''
     }
-    if (state.selected_char?.info.description) {
-      const template = Handlebars.compile(state.selected_char.info.description)
-      return template({ char: state.selected_char.info.name, user: 'Julien' })
+    if (g_state.selected_char?.info.description) {
+      const template = Handlebars.compile(g_state.selected_char.info.description)
+      return template({ char: g_state.selected_char.info.name, user: 'Julien' })
     }
     return 'character appearance: blonde\nenvironment: living room'
   }
 
   function regenerate_content(i: number) {
     return async () => {
-      if (i === state.story_entries.length - 1) {
-        state.story_entries[state.story_entries.length - 1].content = ''
-        state.story_entries[state.story_entries.length - 1].state = 'wait_content'
-        await send_chat(state.story_entries, received_text)
-        state.story_entries[state.story_entries.length - 1].state = 'wait_prompt'
+      if (i === g_state.story_entries.length - 1) {
+        g_state.story_entries[g_state.story_entries.length - 1].content = ''
+        g_state.story_entries[g_state.story_entries.length - 1].state = 'wait_content'
+        await send_chat(g_state.story_entries, received_text)
+        g_state.story_entries[g_state.story_entries.length - 1].state = 'wait_prompt'
       }
     }
   }
 
   const go_back = () => {
-    chatInputValue = state.story_entries[state.story_entries.length - 2].content
-    state.story_entries = state.story_entries.slice(0, state.story_entries.length - 2)
+    chatInputValue = g_state.story_entries[g_state.story_entries.length - 2].content
+    g_state.story_entries = g_state.story_entries.slice(0, g_state.story_entries.length - 2)
   }
 
   onMount(async () => {
@@ -170,7 +170,7 @@
 
 <div class="chat-container">
   <div class="story">
-    {#each state.story_entries as entry, i (entry.id)}
+    {#each g_state.story_entries as entry, i (entry.id)}
       <StoryScene
         {entry}
         prev_prompt={get_prev_prompt(i)}
