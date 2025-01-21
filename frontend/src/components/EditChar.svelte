@@ -21,6 +21,8 @@
     },
   })
   let generating = $state(false)
+  let current_image = $state(0)
+  let images = $state<string[]>([])
 
   const save_char = async () => {
     if (!g_state.selected_char) return
@@ -86,6 +88,8 @@
         throw new Error(data.detail || 'Failed to generate image')
       }
 
+      images = [...images, data.image]
+      current_image = images.length - 1
       char.image = data.image
     } catch (e) {
       console.log('error', e)
@@ -102,16 +106,23 @@
   }
 
   const go_back = () => {
-    generating = false
+    if (current_image > 0) {
+      current_image--
+      char.image = images[current_image]
+    }
   }
 
   const go_forward = () => {
-    generating = false
+    if (current_image < images.length - 1) {
+      current_image++
+      char.image = images[current_image]
+    }
   }
 
   onMount(() => {
     if (g_state.selected_char) {
       char = g_state.selected_char
+      images = [char.image]
     }
   })
 </script>
@@ -127,9 +138,15 @@
     {/if}
     <div class="flex gap-2 items-end">
       <img src={char.image} alt={char.info.name} />
-      <Button color="light" size="sm" onclick={go_back} class="p-2"><ArrowLeft size="20" /></Button>
-      <Button color="light" size="sm" onclick={go_forward} class="p-2"
-        ><ArrowRight size="20" /></Button
+      <Button color="light" size="sm" onclick={go_back} class="p-2" disabled={current_image <= 0}
+        ><ArrowLeft size="20" /></Button
+      >
+      <Button
+        color="light"
+        size="sm"
+        onclick={go_forward}
+        class="p-2"
+        disabled={current_image >= images.length - 1}><ArrowRight size="20" /></Button
       >
     </div>
   </div>
