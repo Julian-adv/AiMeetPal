@@ -1,7 +1,7 @@
 <script lang="ts">
   import { g_state } from '../lib/state.svelte'
   import { Input, Button } from 'svelte-5-ui-lib'
-  import { onMount } from 'svelte'
+  import { onMount, onDestroy } from 'svelte'
   import FlexibleTextarea from './FlexibleTextarea.svelte'
   import { highlightQuotes } from '../lib/util'
   import type { Character } from '../types/character'
@@ -103,6 +103,10 @@
       e.preventDefault()
       generate_image()
     }
+    if (e.ctrlKey && e.key === 's') {
+      e.preventDefault()
+      save_char()
+    }
   }
 
   const go_back = () => {
@@ -120,10 +124,15 @@
   }
 
   onMount(() => {
+    window.addEventListener('keydown', keydown)
     if (g_state.selected_char) {
       char = g_state.selected_char
       images = [char.image]
     }
+  })
+
+  onDestroy(() => {
+    window.removeEventListener('keydown', keydown)
   })
 </script>
 
@@ -152,7 +161,7 @@
   </div>
   <div class="label">Image prompt</div>
   <div>
-    <FlexibleTextarea bind:value={char.info.image_prompt} onkeydown={keydown} />
+    <FlexibleTextarea bind:value={char.info.image_prompt} />
     <Button color="light" onclick={generate_image}>Generate (Ctrl+⏎)</Button>
   </div>
   <div class="label">Name</div>
