@@ -23,6 +23,7 @@ class StoryEntry(BaseModel):
     image_prompt: str | None
 
 class Session(BaseModel):
+    session_name: str
     selected_char: Character
     story_entries: list[dict]
 
@@ -35,10 +36,9 @@ async def save_session(session: Session):
         if not os.path.exists(session_dir):
             os.makedirs(session_dir)
 
-        time_stamp = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
-        path = get_data_path(f'{session_dir}/{time_stamp}.json')
+        path = get_data_path(f'{session_dir}/{session.session_name}.json')
         with open(path, 'w') as f:
-            json.dump(session.dict(), f, indent=2)
+            json.dump(session.model_dump(), f, indent=2)
         return {"success": True}
     except Exception as e:
         print(f"Error creating sessions directory: {e}")

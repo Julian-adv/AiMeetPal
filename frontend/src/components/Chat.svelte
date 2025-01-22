@@ -12,6 +12,7 @@
   let chatInputElement: HTMLInputElement
   let chatInputValue = ''
   let error: string | null = null
+  let session_name: string = ''
 
   function formatResponse(text: string): string {
     const match = text.match(
@@ -132,6 +133,7 @@
         },
       ]
       g_state.story_entries[0].speaker = g_state.selected_char.info.name
+      session_name = new Date().toLocaleString('sv').replace(/:/g, '-')
     }
   }
 
@@ -164,10 +166,10 @@
 
   const image_generated = async () => {
     const payload = {
+      session_name: session_name,
       selected_char: g_state.selected_char,
       story_entries: g_state.story_entries,
     }
-    console.log(payload)
     await fetch('http://localhost:5000/api/save-session', {
       method: 'POST',
       headers: {
