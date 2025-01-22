@@ -117,23 +117,48 @@
     }
   }
 
+  async function load_last_session() {
+    try {
+      const response = await fetch('http://localhost:5000/api/load-last-session', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ name: g_state.selected_char?.file_name.replace('.card', '') }),
+      })
+      const data = await response.json()
+      return data
+    } catch (e) {
+      console.error('Failed to load last session:', e)
+      return { success: false }
+    }
+  }
+
   async function start_chat() {
     if (g_state.selected_char) {
-      const template = Handlebars.compile(g_state.selected_char.info.first_mes)
-      g_state.story_entries = [
-        {
-          id: 0,
-          speaker: '',
-          content: template({
-            user: 'Julien',
-            char: g_state.selected_char.info.name,
-          }),
-          state: 'wait_prompt',
-          image: null,
-        },
-      ]
-      g_state.story_entries[0].speaker = g_state.selected_char.info.name
-      session_name = new Date().toLocaleString('sv').replace(/:/g, '-')
+      const lastSession = await load_last_session()
+      
+      if (lastSession.success && lastSession.session) {
+        g_state.story_entries = lastSession.session.story_entries
+        session_name = lastSession.session_name
+        nextId = Math.max(...g_state.story_entries.map(entry => entry.id)) + 1
+      } else {
+        const template = Handlebars.compile(g_state.selected_char.info.first_mes)
+        g_state.story_entries = [
+          {
+            id: 0,
+            speaker: '',
+            content: template({
+              user: 'Julien',
+              char: g_state.selected_char.info.name,
+            }),
+            state: 'wait_prompt',
+            image: null,
+          },
+        ]
+        g_state.story_entries[0].speaker = g_state.selected_char.info.name
+        session_name = new Date().toLocaleString('sv').replace(/:/g, '-')
+      }
     }
   }
 
