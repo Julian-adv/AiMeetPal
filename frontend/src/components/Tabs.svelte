@@ -3,24 +3,24 @@
 
   interface Props {
     tab_items: TabItem[]
-    active_tab_value: number
+    active_tab: number
   }
 
-  let { tab_items, active_tab_value }: Props = $props()
+  let { tab_items, active_tab }: Props = $props()
 
   const handle_click = (tab_value: number) => () => {
-    active_tab_value = tab_value
+    active_tab = tab_value
   }
 
   const handle_keydown = (tab_value: number) => (e: KeyboardEvent) => {
     if (e.key === 'Enter' || e.key === ' ') {
       e.preventDefault()
-      active_tab_value = tab_value
+      active_tab = tab_value
     }
   }
 
   function active_class(tab: number) {
-    return active_tab_value === tab ? 'active' : ''
+    return active_tab === tab ? 'active' : ''
   }
 </script>
 
@@ -30,7 +30,7 @@
       {#each tab_items as item}
         <button
           role="tab"
-          aria-selected={active_tab_value === item.value}
+          aria-selected={active_tab === item.value}
           aria-controls="panel-{item.value}"
           class={active_class(item.value)}
           onclick={handle_click(item.value)}
@@ -45,7 +45,7 @@
 
   <div class="content-container">
     {#each tab_items as item}
-      {#if active_tab_value === item.value}
+      {#if active_tab === item.value}
         <item.component />
       {/if}
     {/each}

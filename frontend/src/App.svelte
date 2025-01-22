@@ -5,6 +5,7 @@
   import Settings from './components/Settings.svelte'
   import Tabs from './components/Tabs.svelte'
   import { Users, ChatBubbleLeftRight, WrenchScrewdriver, UserPlus } from 'svelte-heros-v2'
+  import { g_state } from './lib/state.svelte'
 
   let tab_items = [
     { label: 'Characters', icon: Users, value: 1, component: CharacterList },
@@ -12,7 +13,6 @@
     { label: 'Edit char', icon: UserPlus, value: 3, component: EditChar },
     { label: 'Settings', icon: WrenchScrewdriver, value: 4, component: Settings },
   ]
-  let active_tab_value = 1
   let prompt = ''
   let loading = false
   let generatedImage: string | null = null
@@ -64,7 +64,7 @@
 <main>
   <h1>Ai Meet Pal</h1>
 
-  <Tabs {tab_items} {active_tab_value} />
+  <Tabs {tab_items} active_tab={g_state.active_tab} />
 </main>
 
 <style>
