@@ -162,6 +162,21 @@
     g_state.story_entries = g_state.story_entries.slice(0, g_state.story_entries.length - 2)
   }
 
+  const image_generated = async () => {
+    const payload = {
+      selected_char: g_state.selected_char,
+      story_entries: g_state.story_entries,
+    }
+    console.log(payload)
+    await fetch('http://localhost:5000/api/save-session', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(payload),
+    })
+  }
+
   onMount(async () => {
     await start_chat()
     chatInputElement?.focus()
@@ -176,6 +191,7 @@
         prev_prompt={get_prev_prompt(i)}
         regenerate_content={regenerate_content(i)}
         index={i}
+        {image_generated}
       />
     {/each}
   </div>

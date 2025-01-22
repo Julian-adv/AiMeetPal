@@ -10,8 +10,14 @@
     prev_prompt,
     regenerate_content,
     index,
-  }: { entry: StoryEntry; prev_prompt: string; regenerate_content: () => void; index: number } =
-    $props()
+    image_generated,
+  }: {
+    entry: StoryEntry
+    prev_prompt: string
+    regenerate_content: () => void
+    index: number
+    image_generated: () => void
+  } = $props()
   let width = $derived(entry.width ?? 832)
   let height = $derived(entry.height ?? 1216)
   let edit_mode = $state(false)
@@ -48,6 +54,7 @@
     entry.image_prompt = prompt
     entry.image = await generate_image(prompt, width, height)
     entry.state = 'image'
+    image_generated()
   }
 
   $effect(() => {
