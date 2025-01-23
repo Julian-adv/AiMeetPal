@@ -33,6 +33,11 @@ class SaveSessionImage(BaseModel):
     index: int
     image: str  # base64 encoded image
 
+class LoadSessionImage(BaseModel):
+    character_name: str
+    session_name: str
+    index: int
+
 @router.post("/api/save-session")
 async def save_session(session: Session):
     try:
@@ -114,4 +119,25 @@ async def save_session_image(data: SaveSessionImage):
 
     except Exception as e:
         print(f"Error saving session image: {e}")
+        return {"success": False, "message": str(e)}
+
+@router.post("/api/load-session-image")
+async def load_session_image(data: LoadSessionImage):
+    try:
+        # Create image path
+        session_dir = get_data_path(f'sessions/{data.character_name}/{data.session_name}')
+        image_path = os.path.join(session_dir, f"{data.index}.png")
+        
+        if not os.path.exists(image_path):
+            return {"success": False, "message": "Image not found"}
+            
+        # Read and encode image
+        import base64
+        with open(image_path, 'rb') as f:
+            image_data = f.read()
+            base64_image = base64.b64encode(image_data).decode('utf-8')
+            return {"success": True, "image": f"data:image/png;base64,{base64_image}"}
+
+    except Exception as e:
+        print(f"Error loading session image: {e}")
         return {"success": False, "message": str(e)}

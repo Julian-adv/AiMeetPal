@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { StoryEntries } from '../types/story'
+  import type { StoryEntries, StoryEntry } from '../types/story'
   import StoryScene from './StoryScene.svelte'
   import { g_state } from '../lib/state.svelte'
   import { onMount } from 'svelte'
@@ -134,14 +134,48 @@
     }
   }
 
+  async function load_session_image(
+    entry: StoryEntry,
+    character_name: string,
+    session_name: string
+  ) {
+    try {
+      const response = await fetch('http://localhost:5000/api/load-session-image', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          character_name,
+          session_name,
+          index: entry.id,
+        }),
+      })
+      const data = await response.json()
+      if (data.success) {
+        entry.image = data.image
+      }
+    } catch (e) {
+      console.error('Failed to load session image:', e)
+    }
+  }
+
   async function start_chat() {
     if (g_state.selected_char) {
       const lastSession = await load_last_session()
-      
+
       if (lastSession.success && lastSession.session) {
         g_state.story_entries = lastSession.session.story_entries
         session_name = lastSession.session_name
-        nextId = Math.max(...g_state.story_entries.map(entry => entry.id)) + 1
+        nextId = Math.max(...g_state.story_entries.map((entry) => entry.id)) + 1
+
+        // Load images for entries that have image_path
+        const character_name = g_state.selected_char.file_name.replace('.card', '')
+        for (const entry of g_state.story_entries) {
+          if (entry.image_path) {
+            await load_session_image(entry, character_name, session_name)
+          }
+        }
       } else {
         const template = Handlebars.compile(g_state.selected_char.info.first_mes)
         g_state.story_entries = [
@@ -236,10 +270,7 @@
       const payload = {
         session_name: session_name,
         selected_char: g_state.selected_char,
-        story_entries: g_state.story_entries.map(entry => ({
-          ...entry,
-          image: null
-        })),
+        story_entries: g_state.story_entries.map(({ image, ...entry }) => entry),
       }
       await fetch('http://localhost:5000/api/save-session', {
         method: 'POST',
