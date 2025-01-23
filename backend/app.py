@@ -10,6 +10,7 @@ from generate_image import router as generate_image_router
 from files import router as files_router
 from settings import router as settings_router
 from session import router as session_router
+from tokenizer import router as tokenizer_router
 
 os.environ["TF_ENABLE_ONEDNN_OPTS"] = "0"
 # os.environ['TF_CPP_MIN_LOG_LEVEL'] = '2'  # hide tensorflow warnings
@@ -33,6 +34,7 @@ app.include_router(characters_router)
 app.include_router(files_router)
 app.include_router(settings_router)
 app.include_router(session_router)
+app.include_router(tokenizer_router)
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=5000)

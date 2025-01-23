@@ -10,9 +10,10 @@
   let nextId = 1
   let user_name = 'Julien'
   let chatInputElement: HTMLInputElement
-  let chatInputValue = ''
+  let chatInputValue = $state('')
   let error: string | null = null
   let session_name: string = ''
+  let token_count: number = $state(0)
 
   function formatResponse(text: string): string {
     const match = text.match(
@@ -84,6 +85,30 @@
     }
   }
 
+  async function count_tokens(info: any, entries: StoryEntry[]) {
+    try {
+      const response = await fetch('http://localhost:5000/api/count-tokens', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ info, entries }),
+      })
+
+      const data = await response.json()
+      return data
+    } catch (e) {
+      console.error('Failed to count tokens:', e)
+      return { success: false }
+    }
+  }
+
+  function update_token_count() {
+    count_tokens(g_state.selected_char?.info, g_state.story_entries).then((response) => {
+      token_count = response.total_tokens
+    })
+  }
+
   async function handleChat(event: KeyboardEvent) {
     if (event.key !== 'Enter') return
     if (!chatInputValue.trim()) return
@@ -111,6 +136,7 @@
       chatInputValue = ''
       await send_chat(g_state.story_entries, received_text)
       g_state.story_entries[g_state.story_entries.length - 1].state = 'wait_prompt'
+      update_token_count()
     } catch (e: unknown) {
       error = e instanceof Error ? e.message : 'An unknown error occurred'
     } finally {
@@ -172,7 +198,7 @@
         // Load images for entries that have image_path
         const character_name = g_state.selected_char.file_name.replace('.card', '')
         for (const entry of g_state.story_entries) {
-          if (entry.image_path) {
+          if (entry.image_path && !entry.image) {
             await load_session_image(entry, character_name, session_name)
           }
         }
@@ -193,6 +219,7 @@
         g_state.story_entries[0].speaker = g_state.selected_char.info.name
         session_name = new Date().toLocaleString('sv').replace(/:/g, '-')
       }
+      update_token_count()
     }
   }
 
@@ -221,6 +248,7 @@
   const go_back = () => {
     chatInputValue = g_state.story_entries[g_state.story_entries.length - 2].content
     g_state.story_entries = g_state.story_entries.slice(0, g_state.story_entries.length - 2)
+    update_token_count()
   }
 
   const image_generated = async () => {
@@ -303,7 +331,7 @@
     {/each}
   </div>
 
-  <div class="flex justify-start">
+  <div class="flex justify-start items-center gap-2">
     <Button
       id="go_back"
       color="light"
@@ -314,6 +342,7 @@
     <Popover triggeredBy="#go_back" class="text-sm p-2"
       >Go back to the previous step in the conversation</Popover
     >
+    <div class="text-sm text-neutral-500">Tokens: {token_count}</div>
   </div>
   <div class="chat-input-container">
     <span class="user-name">{user_name}:</span>
@@ -321,7 +350,7 @@
       bind:this={chatInputElement}
       type="text"
       bind:value={chatInputValue}
-      on:keydown={handleChat}
+      onkeydown={handleChat}
       class="chat-input"
     />
   </div>

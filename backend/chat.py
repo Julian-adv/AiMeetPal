@@ -35,7 +35,6 @@ async def chat(message: ChatMessage):
             wiAfter = ""
             persona = "Julien is living alone in a luxury mansion."
             prompt = make_prompt("Julien", message.info.name, wiBefore, message.info.description, message.info.personality, message.info.scenario, wiAfter, persona, message.entries)
-            print(prompt)
             payload = make_payload(prompt, settings, preset)
 
             async with client.stream(
