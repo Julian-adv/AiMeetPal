@@ -190,18 +190,67 @@
   }
 
   const image_generated = async () => {
-    const payload = {
-      session_name: session_name,
-      selected_char: g_state.selected_char,
-      story_entries: g_state.story_entries,
+    try {
+      // Save images for entries that don't have image_path
+      for (const entry of g_state.story_entries) {
+        if (entry.image && !entry.image_path) {
+          const imageResponse = await fetch('http://localhost:5000/api/save-session-image', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              character_name: g_state.selected_char?.file_name.replace('.card', ''),
+              session_name,
+              index: entry.id,
+              image: entry.image,
+            }),
+          })
+          const imageResult = await imageResponse.json()
+          if (imageResult.success) {
+            entry.image_path = imageResult.path
+          }
+        }
+      }
+
+      // First save the image
+      const lastEntry = g_state.story_entries[g_state.story_entries.length - 1]
+      const imageResponse = await fetch('http://localhost:5000/api/save-session-image', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          character_name: g_state.selected_char?.file_name.replace('.card', ''),
+          session_name,
+          index: lastEntry.id,
+          image: lastEntry.image,
+        }),
+      })
+      const imageResult = await imageResponse.json()
+      if (imageResult.success) {
+        lastEntry.image_path = imageResult.path
+      }
+
+      // Then save the session
+      const payload = {
+        session_name: session_name,
+        selected_char: g_state.selected_char,
+        story_entries: g_state.story_entries.map(entry => ({
+          ...entry,
+          image: null
+        })),
+      }
+      await fetch('http://localhost:5000/api/save-session', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+      })
+    } catch (e) {
+      console.error('Failed to save session:', e)
     }
-    await fetch('http://localhost:5000/api/save-session', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(payload),
-    })
   }
 
   onMount(async () => {

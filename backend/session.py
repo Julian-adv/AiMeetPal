@@ -27,16 +27,25 @@ class Session(BaseModel):
     selected_char: Character
     story_entries: list[dict]
 
+class SaveSessionImage(BaseModel):
+    character_name: str
+    session_name: str
+    index: int
+    image: str  # base64 encoded image
+
 @router.post("/api/save-session")
 async def save_session(session: Session):
     try:
         if session.selected_char.file_name.endswith('.card'):
             file_name = session.selected_char.file_name[:-4]
-        session_dir = get_data_path(f'sessions/{file_name}')
+        
+        # Create directory for character and session
+        session_dir = get_data_path(f'sessions/{file_name}/{session.session_name}')
         if not os.path.exists(session_dir):
             os.makedirs(session_dir)
 
-        path = get_data_path(f'{session_dir}/{session.session_name}.json')
+        # Save session data
+        path = os.path.join(session_dir, 'session.json')
         with open(path, 'w') as f:
             json.dump(session.model_dump(), f, indent=2)
         return {"success": True}
@@ -51,29 +60,58 @@ class LoadLastSession(BaseModel):
 async def load_last_session(data: LoadLastSession):
     try:
         # Get the sessions directory for the character
-        session_dir = get_data_path(f'sessions/{data.name}')
-        if not os.path.exists(session_dir):
+        char_dir = get_data_path(f'sessions/{data.name}')
+        if not os.path.exists(char_dir):
             return {"success": False, "message": "No sessions found for this character"}
 
-        # List all session files and sort by modification time
-        session_files = []
-        for file in os.listdir(session_dir):
-            if file.endswith('.json'):
-                file_path = os.path.join(session_dir, file)
-                session_files.append((file_path, os.path.getmtime(file_path)))
+        # List all session directories and sort by modification time
+        session_dirs = []
+        for session_name in os.listdir(char_dir):
+            session_path = os.path.join(char_dir, session_name)
+            if os.path.isdir(session_path):
+                json_path = os.path.join(session_path, 'session.json')
+                if os.path.exists(json_path):
+                    session_dirs.append((session_path, os.path.getmtime(json_path)))
         
-        if not session_files:
+        if not session_dirs:
             return {"success": False, "message": "No sessions found for this character"}
 
-        # Get the most recent session file
-        latest_session = max(session_files, key=lambda x: x[1])[0]
+        # Get the most recent session directory
+        latest_session_dir = max(session_dirs, key=lambda x: x[1])[0]
+        session_name = os.path.basename(latest_session_dir)
         
         # Load and return the session data
-        with open(latest_session, 'r') as f:
+        json_path = os.path.join(latest_session_dir, 'session.json')
+        with open(json_path, 'r') as f:
             session_data = json.load(f)
-            session_name = os.path.splitext(os.path.basename(latest_session))[0]
             return {"success": True, "session": session_data, "session_name": session_name}
 
     except Exception as e:
         print(f"Error loading last session: {e}")
+        return {"success": False, "message": str(e)}
+
+@router.post("/api/save-session-image")
+async def save_session_image(data: SaveSessionImage):
+    try:
+        # Create session directory path
+        session_dir = get_data_path(f'sessions/{data.character_name}/{data.session_name}')
+        if not os.path.exists(session_dir):
+            os.makedirs(session_dir)
+
+        # Save image
+        image_name = f"{data.index}.png"
+        image_path = os.path.join(session_dir, image_name)
+        
+        # Decode base64 and save image
+        import base64
+        image_data = base64.b64decode(data.image.split(',')[1] if ',' in data.image else data.image)
+        with open(image_path, 'wb') as f:
+            f.write(image_data)
+            
+        # Return relative path from data directory
+        relative_path = f'sessions/{data.character_name}/{data.session_name}/{image_name}'
+        return {"success": True, "path": relative_path}
+
+    except Exception as e:
+        print(f"Error saving session image: {e}")
         return {"success": False, "message": str(e)}
