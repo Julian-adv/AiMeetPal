@@ -57,9 +57,12 @@ def load_context():
 @router.get("/api/settings")
 async def load_settings_api():
     settings = load_settings(reload=True)
-    print(settings)
+    preset = load_preset()
     try:
-        return settings
+        return {
+            "settings": settings,
+            "preset": preset
+        }
     except Exception as e:
         print(f"Error loading settings: {e}")
         raise HTTPException(status_code=500, detail=str(e))

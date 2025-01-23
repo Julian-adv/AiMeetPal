@@ -6,6 +6,7 @@
   import Handlebars from 'handlebars'
   import { Button, Popover } from 'svelte-5-ui-lib'
   import { ArrowUturnLeft } from 'svelte-heros-v2'
+  import { preset, load_settings } from '../lib/settings.svelte'
 
   let nextId = 1
   let user_name = 'Julien'
@@ -315,6 +316,7 @@
   onMount(async () => {
     await start_chat()
     chatInputElement?.focus()
+    await load_settings()
   })
 </script>
 
@@ -342,7 +344,7 @@
     <Popover triggeredBy="#go_back" class="text-sm p-2"
       >Go back to the previous step in the conversation</Popover
     >
-    <div class="text-sm text-neutral-500">Tokens: {token_count}</div>
+    <div class="text-sm text-neutral-500">Tokens: {token_count} / {preset.max_length}</div>
   </div>
   <div class="chat-input-container">
     <span class="user-name">{user_name}:</span>

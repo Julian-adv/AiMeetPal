@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { settings } from '../lib/settings.svelte'
+  import { settings, load_settings } from '../lib/settings.svelte'
   import { onMount } from 'svelte'
   import { Modal, Button, Input, uiHelpers, Breadcrumb, BreadcrumbItem } from 'svelte-5-ui-lib'
 
@@ -124,22 +124,8 @@
     await get_checkpoints()
   }
 
-  async function load_server_settings() {
-    try {
-      const response = await fetch('http://localhost:5000/api/settings')
-      if (response.ok) {
-        const data = await response.json()
-        return data
-      }
-    } catch (error) {
-      console.error('Error fetching model list:', error)
-      return []
-    }
-  }
-
   onMount(async () => {
-    const server_settings = await load_server_settings()
-    Object.assign(settings, server_settings)
+    await load_settings()
     dir_entries.current_directory = settings.checkpoints_folder
     try {
       dir_entries = await get_dir_entries(dir_entries.current_directory)
