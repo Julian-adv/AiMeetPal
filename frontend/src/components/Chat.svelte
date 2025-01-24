@@ -107,6 +107,7 @@
   function update_token_count() {
     count_tokens(g_state.selected_char?.info, g_state.story_entries).then((response) => {
       token_count = response.total_tokens
+      g_state.story_entries[g_state.story_entries.length - 1].token_count = token_count
     })
   }
 
@@ -249,7 +250,12 @@
   const go_back = () => {
     chatInputValue = g_state.story_entries[g_state.story_entries.length - 2].content
     g_state.story_entries = g_state.story_entries.slice(0, g_state.story_entries.length - 2)
-    update_token_count()
+    const count = g_state.story_entries[g_state.story_entries.length - 1].token_count
+    if (count) {
+      token_count = count
+    } else {
+      update_token_count()
+    }
   }
 
   const image_generated = async () => {

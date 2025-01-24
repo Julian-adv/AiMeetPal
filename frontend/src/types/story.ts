@@ -8,6 +8,7 @@ export interface StoryEntry {
   width?: number
   height?: number
   image_prompt?: string
+  token_count?: number
 }
 
 export type StoryEntries = StoryEntry[]
