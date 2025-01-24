@@ -1,11 +1,12 @@
 <script lang="ts">
   import type { StoryEntries, StoryEntry } from '../types/story'
+  import type { Character } from '../types/character'
   import StoryScene from './StoryScene.svelte'
   import { g_state } from '../lib/state.svelte'
   import { onMount } from 'svelte'
   import Handlebars from 'handlebars'
   import { Button, Popover } from 'svelte-5-ui-lib'
-  import { ArrowUturnLeft } from 'svelte-heros-v2'
+  import { ArrowUturnLeft, DocumentPlus } from 'svelte-heros-v2'
   import { preset, load_settings } from '../lib/settings.svelte'
 
   let nextId = 1
@@ -15,6 +16,19 @@
   let error: string | null = null
   let session_name: string = ''
   let token_count: number = $state(0)
+  let session_char: Character = {
+    file_name: '',
+    image: '',
+    info: {
+      name: '',
+      description: '',
+      personality: '',
+      scenario: '',
+      first_mes: '',
+      mes_example: '',
+      image_prompt: '',
+    },
+  }
 
   function formatResponse(text: string): string {
     const match = text.match(
@@ -193,6 +207,7 @@
       const lastSession = await load_last_session()
 
       if (lastSession.success && lastSession.session) {
+        session_char = lastSession.session.selected_char
         g_state.story_entries = lastSession.session.story_entries
         session_name = lastSession.session_name
         nextId = Math.max(...g_state.story_entries.map((entry) => entry.id)) + 1
@@ -204,24 +219,10 @@
             await load_session_image(entry, character_name, session_name)
           }
         }
+        update_token_count()
       } else {
-        const template = Handlebars.compile(g_state.selected_char.info.first_mes)
-        g_state.story_entries = [
-          {
-            id: 0,
-            speaker: '',
-            content: template({
-              user: 'Julien',
-              char: g_state.selected_char.info.name,
-            }),
-            state: 'wait_prompt',
-            image: null,
-          },
-        ]
-        g_state.story_entries[0].speaker = g_state.selected_char.info.name
-        session_name = new Date().toLocaleString('sv').replace(/:/g, '-')
+        new_session()
       }
-      update_token_count()
     }
   }
 
@@ -258,53 +259,70 @@
     }
   }
 
-  const image_generated = async () => {
-    try {
-      // Save images for entries that don't have image_path
-      for (const entry of g_state.story_entries) {
-        if (entry.image && !entry.image_path) {
-          const imageResponse = await fetch('http://localhost:5000/api/save-session-image', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              character_name: g_state.selected_char?.file_name.replace('.card', ''),
-              session_name,
-              index: entry.id,
-              image: entry.image,
-            }),
-          })
-          const imageResult = await imageResponse.json()
-          if (imageResult.success) {
-            entry.image_path = imageResult.path
-          }
-        }
-      }
+  const new_session = () => {
+    if (g_state.selected_char) {
+      const template = Handlebars.compile(g_state.selected_char.info.first_mes)
+      g_state.story_entries = [
+        {
+          id: 0,
+          speaker: '',
+          content: template({
+            user: 'Julien',
+            char: g_state.selected_char.info.name,
+          }),
+          state: 'wait_prompt',
+          image: null,
+        },
+      ]
+      g_state.story_entries[0].speaker = g_state.selected_char.info.name
+      session_name = new Date().toLocaleString('sv').replace(/:/g, '-')
+      session_char = { ...g_state.selected_char }
+      update_token_count()
+    }
+  }
 
-      // First save the image
-      const lastEntry = g_state.story_entries[g_state.story_entries.length - 1]
+  async function save_session_image(file_name: string, image: string | null) {
+    if (image) {
       const imageResponse = await fetch('http://localhost:5000/api/save-session-image', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          character_name: g_state.selected_char?.file_name.replace('.card', ''),
+          character_name: session_char.file_name.replace('.card', ''),
           session_name,
-          index: lastEntry.id,
-          image: lastEntry.image,
+          index: file_name,
+          image: image,
         }),
       })
-      const imageResult = await imageResponse.json()
-      if (imageResult.success) {
-        lastEntry.image_path = imageResult.path
+      const result = await imageResponse.json()
+      if (result.success) {
+        return result.path
+      }
+    }
+    return null
+  }
+
+  const image_generated = async () => {
+    try {
+      if (session_char.image.startsWith('data:image/png;base64,')) {
+        const path = await save_session_image('character', session_char.image)
+        if (path) {
+          session_char.image = path
+        }
+      }
+
+      // First save the image
+      const lastEntry = g_state.story_entries[g_state.story_entries.length - 1]
+      const path = await save_session_image(lastEntry.id.toString(), lastEntry.image)
+      if (path) {
+        lastEntry.image_path = path
       }
 
       // Then save the session
       const payload = {
         session_name: session_name,
-        selected_char: g_state.selected_char,
+        selected_char: session_char,
         story_entries: g_state.story_entries.map(({ image, ...entry }) => entry),
       }
       await fetch('http://localhost:5000/api/save-session', {
@@ -344,12 +362,20 @@
       id="go_back"
       color="light"
       size="sm"
-      class="px-3 py-2 text-neutral-500 hover:border-neutral-300"
+      class="px-3 py-2 text-neutral-500"
       onclick={go_back}><ArrowUturnLeft size="20" /></Button
     >
     <Popover triggeredBy="#go_back" class="text-sm p-2"
       >Go back to the previous step in the conversation</Popover
     >
+    <Button
+      id="new_session"
+      color="light"
+      size="sm"
+      class="px-3 py-2 text-neutral-500"
+      onclick={new_session}><DocumentPlus size="20" /></Button
+    >
+    <Popover triggeredBy="#new_session" class="text-sm p-2">Start a new session</Popover>
     <div class="text-sm text-neutral-500">Tokens: {token_count} / {preset.max_length}</div>
   </div>
   <div class="chat-input-container">

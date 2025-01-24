@@ -30,7 +30,7 @@ class Session(BaseModel):
 class SaveSessionImage(BaseModel):
     character_name: str
     session_name: str
-    index: int
+    index: str
     image: str  # base64 encoded image
 
 class LoadSessionImage(BaseModel):
