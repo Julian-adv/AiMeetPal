@@ -6,6 +6,8 @@
   import { highlightQuotes } from '../lib/util'
   import type { Character } from '../types/character'
   import { ArrowLeft, ArrowRight } from 'svelte-heros-v2'
+  import { generate_image } from '../lib/generate_image.svelte'
+  import { settings } from '../lib/settings.svelte'
 
   let char: Character = $state({
     file_name: '',
@@ -55,42 +57,26 @@
     }
   }
 
-  const generate_image = async () => {
+  const generate_char_image = async () => {
     if (!char.info.image_prompt.trim()) return
 
-    const guidance_scale = 4.5
     const width = 832 * 1
     const height = 1216 * 1
-    const prefix = 'score_9, score_8_up, score_7_up'
-    const face_steps = 20
 
     if (generating) return
     generating = true
 
     try {
-      const response = await fetch('http://localhost:5000/api/generate-image', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          prompt: `${prefix}, ${char.info.image_prompt}`,
-          guidance_scale,
-          width,
-          height,
-          face_steps,
-        }),
-      })
+      const image = await generate_image(
+        settings.checkpoint_name,
+        char.info.image_prompt,
+        width,
+        height
+      )
 
-      const data = await response.json()
-
-      if (!response.ok) {
-        throw new Error(data.detail || 'Failed to generate image')
-      }
-
-      images = [...images, data.image]
+      images = [...images, image]
       current_image = images.length - 1
-      char.image = data.image
+      char.image = image
     } catch (e) {
       console.log('error', e)
     } finally {
@@ -101,7 +87,7 @@
   const keydown = (e: KeyboardEvent) => {
     if (e.key === 'Enter' && e.ctrlKey) {
       e.preventDefault()
-      generate_image()
+      generate_char_image()
     }
     if (e.ctrlKey && e.key === 's') {
       e.preventDefault()
@@ -162,7 +148,7 @@
   <div class="label">Image prompt</div>
   <div>
     <FlexibleTextarea bind:value={char.info.image_prompt} />
-    <Button color="light" onclick={generate_image}>Generate (Ctrl+⏎)</Button>
+    <Button color="light" onclick={generate_char_image}>Generate (Ctrl+⏎)</Button>
   </div>
   <div class="label">Name</div>
   <div><Input bind:value={char.info.name} /></div>

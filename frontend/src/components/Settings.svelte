@@ -2,6 +2,8 @@
   import { settings, load_settings } from '../lib/settings.svelte'
   import { onMount } from 'svelte'
   import { Modal, Button, Input, uiHelpers, Breadcrumb, BreadcrumbItem } from 'svelte-5-ui-lib'
+  import type { Entry, DirEntries } from '../types/file'
+  import { get_dir_entries, get_checkpoints } from '../lib/files.svelte'
 
   let language_models: string[] = $state([])
   let checkpoints: string[] = $state([])
@@ -12,26 +14,12 @@
     modalStatus = modalExample.isOpen
   })
 
-  interface Entry {
-    name: string
-    is_dir: boolean
-  }
-
-  let dir_entries: { entries: Entry[]; current_directory: string } = $state({
+  let dir_entries: DirEntries = $state({
     entries: [],
     current_directory: '.',
   })
 
   let path_entries = $state<string[]>([])
-
-  async function get_checkpoints() {
-    try {
-      const entries = await get_dir_entries(settings.checkpoints_folder)
-      checkpoints = entries.entries.map((entry: Entry) => entry.name)
-    } catch (error) {
-      console.error('Error fetching checkpoints:', error)
-    }
-  }
 
   async function get_language_models() {
     try {
@@ -51,20 +39,6 @@
       console.error('Error fetching model list:', error)
       return []
     }
-  }
-
-  async function get_dir_entries(path: string) {
-    const response = await fetch('http://localhost:5000/api/files', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ path: path }),
-    })
-    if (response.ok) {
-      return await response.json()
-    }
-    throw new Error('Failed to fetch directory entries')
   }
 
   function dir_to_path_entries(path: string) {
@@ -121,7 +95,7 @@
   const select_path = async () => {
     settings.checkpoints_folder = dir_entries.current_directory
     modalExample.close()
-    await get_checkpoints()
+    checkpoints = await get_checkpoints()
   }
 
   onMount(async () => {
@@ -139,7 +113,7 @@
       }
     }
     try {
-      await get_checkpoints()
+      checkpoints = await get_checkpoints()
     } catch (error) {
       console.error('Error fetching checkpoints:', error)
     }

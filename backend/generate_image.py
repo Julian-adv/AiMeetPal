@@ -42,6 +42,7 @@ def encode(clip, text):
 
 
 class ImageGenerationRequest(BaseModel):
+    checkpoint_name: str
     prompt: str
     negative_prompt: Optional[str] = None
     num_inference_steps: Optional[int] = 50
@@ -62,7 +63,7 @@ async def generate_image(request: ImageGenerationRequest):
         global vae
         global ckpt_path
         settings = load_settings()
-        new_ckpt_path = os.path.join(settings['checkpoints_folder'], settings['checkpoint_name'])
+        new_ckpt_path = os.path.join(settings['checkpoints_folder'], request.checkpoint_name)
         if not check_point or new_ckpt_path != ckpt_path:
             ckpt_path = new_ckpt_path
             check_point,clip,vae,_ = comfy.sd.load_checkpoint_guess_config(ckpt_path, output_vae=True, output_clip=True, embedding_directory=embedding_path)

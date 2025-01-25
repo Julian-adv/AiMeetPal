@@ -1,8 +1,16 @@
+export enum StoryEntryState {
+  WaitContent = 'wait_content',
+  WaitPrompt = 'wait_prompt',
+  WaitImage = 'wait_image',
+  Image = 'image',
+  NoImage = 'no_image',
+}
+
 export interface StoryEntry {
   id: number
   speaker: string
   content: string
-  state: 'wait_content' | 'wait_prompt' | 'wait_image' | 'image' | 'no_image'
+  state: StoryEntryState
   image: string | null
   image_path?: string
   width?: number

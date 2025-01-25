@@ -8,6 +8,7 @@
   import { Button, Popover } from 'svelte-5-ui-lib'
   import { ArrowUturnLeft, DocumentPlus } from 'svelte-heros-v2'
   import { preset, load_settings } from '../lib/settings.svelte'
+  import { StoryEntryState } from '../types/story'
 
   let nextId = 1
   let user_name = 'Julien'
@@ -138,20 +139,20 @@
           id: nextId++,
           speaker: 'Julien',
           content: chatInputValue,
-          state: 'no_image',
+          state: StoryEntryState.NoImage,
           image: null,
         },
         {
           id: nextId++,
           speaker: g_state.selected_char?.info.name ?? 'AI',
           content: '',
-          state: 'wait_content',
+          state: StoryEntryState.WaitContent,
           image: null,
         },
       ]
       chatInputValue = ''
       await send_chat(g_state.story_entries, received_text)
-      g_state.story_entries[g_state.story_entries.length - 1].state = 'wait_prompt'
+      g_state.story_entries[g_state.story_entries.length - 1].state = StoryEntryState.WaitPrompt
       update_token_count()
     } catch (e: unknown) {
       error = e instanceof Error ? e.message : 'An unknown error occurred'
@@ -241,9 +242,9 @@
     return async () => {
       if (i === g_state.story_entries.length - 1) {
         g_state.story_entries[g_state.story_entries.length - 1].content = ''
-        g_state.story_entries[g_state.story_entries.length - 1].state = 'wait_content'
+        g_state.story_entries[g_state.story_entries.length - 1].state = StoryEntryState.WaitContent
         await send_chat(g_state.story_entries, received_text)
-        g_state.story_entries[g_state.story_entries.length - 1].state = 'wait_prompt'
+        g_state.story_entries[g_state.story_entries.length - 1].state = StoryEntryState.WaitPrompt
       }
     }
   }
@@ -270,7 +271,7 @@
             user: 'Julien',
             char: g_state.selected_char.info.name,
           }),
-          state: 'wait_prompt',
+          state: StoryEntryState.WaitPrompt,
           image: null,
         },
       ]

@@ -4,6 +4,9 @@
   import { PencilSquare, ArrowPath, Camera } from 'svelte-heros-v2'
   import { generate_image, generate_prompt } from '../lib/generate_image.svelte'
   import { highlightQuotes } from '../lib/util'
+  import { StoryEntryState } from '../types/story'
+  import ImageOrSpinner from './ImageOrSpinner.svelte'
+  import { settings } from '../lib/settings.svelte'
 
   let {
     entry,
@@ -48,50 +51,35 @@
 
   async function generate_initial_image() {
     const { prompt, width, height } = await generate_prompt(entry.content, prev_prompt)
-    entry.state = 'wait_image'
+    entry.state = StoryEntryState.WaitImage
     entry.width = width
     entry.height = height
     entry.image_prompt = prompt
-    entry.image = await generate_image(prompt, width, height)
-    entry.state = 'image'
+    entry.image = await generate_image(settings.checkpoint_name, prompt, width, height)
+    entry.state = StoryEntryState.Image
     image_generated()
   }
 
   $effect(() => {
-    if (entry.state === 'wait_prompt') {
+    if (entry.state === StoryEntryState.WaitPrompt) {
       generate_initial_image()
     }
   })
 
   async function regenerate_image() {
-    entry.state = 'wait_prompt'
+    entry.state = StoryEntryState.WaitPrompt
   }
 </script>
 
 <div class="story-scene">
-  {#if entry.state !== 'no_image'}
-    <div
-      id="scene-image{index}"
-      class={width > height ? 'scene-image-wide' : 'scene-image'}
-      style="--image-width: {width}px; --image-height: {height}px;"
-    >
-      {#if entry.state === 'wait_prompt' || entry.state === 'wait_content'}
-        <div class="image-placeholder">
-          <div class="spinner_square"></div>
-        </div>
-      {:else if entry.state === 'wait_image'}
-        <div class="image-placeholder">
-          <div class="spinner_circle"></div>
-        </div>
-      {/if}
-      {#if entry.image}
-        <img src={entry.image} alt="Scene visualization" />
-      {/if}
-    </div>
-    <Popover class="text-sm p-2 w-[50%] z-20" triggeredBy="#scene-image{index}" position="bottom"
-      >{entry.image_prompt ?? 'Waiting for prompt...'}</Popover
-    >
-  {/if}
+  {#if entry.state !== StoryEntryState.NoImage}
+    <ImageOrSpinner
+      {width}
+      {height}
+      state={entry.state}
+      image={entry.image}
+      image_prompt={entry.image_prompt}
+    />{/if}
   {#if entry.speaker}
     <span class="speaker">{entry.speaker}:</span>
   {/if}
@@ -154,79 +142,6 @@
 
   .story-scene :global .quoted-text {
     color: theme('colors.blue.800');
-  }
-
-  .scene-image {
-    position: relative;
-    float: left;
-    width: calc(var(--image-width) * 0.45);
-    height: calc(var(--image-height) * 0.45);
-    margin: 0 1rem 0.5rem 0;
-    background: theme('colors.zinc.100');
-    border-radius: 8px;
-    overflow: hidden;
-  }
-
-  .scene-image-wide {
-    position: relative;
-    width: calc(var(--image-width) * 0.6);
-    height: calc(var(--image-height) * 0.6);
-    float: none;
-    margin: 0 auto 0.5rem auto;
-    background: theme('colors.zinc.100');
-    border-radius: 8px;
-    overflow: hidden;
-  }
-
-  .scene-image img {
-    max-width: 100%;
-    height: auto;
-    border-radius: 8px;
-  }
-
-  .scene-image-wide img {
-    max-width: 100%;
-    height: auto;
-    border-radius: 8px;
-  }
-
-  .image-placeholder {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    display: flex;
-    padding: 1rem;
-    justify-content: end;
-    align-items: end;
-    z-index: 1;
-  }
-
-  .spinner_square {
-    width: 32px;
-    height: 32px;
-    animation: spin 1s linear infinite;
-    border-radius: 0;
-    border: 4px solid #bfc9eb;
-  }
-
-  .spinner_circle {
-    width: 32px;
-    height: 32px;
-    animation: spin 1s linear infinite;
-    border: 4px solid #f3f3f3;
-    border-top: 4px solid #bfc9eb;
-    border-radius: 50%;
-  }
-
-  @keyframes spin {
-    0% {
-      transform: rotate(0deg);
-    }
-    100% {
-      transform: rotate(360deg);
-    }
   }
 
   .speaker {
