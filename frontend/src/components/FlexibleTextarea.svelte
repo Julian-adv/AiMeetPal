@@ -1,12 +1,20 @@
 <script lang="ts">
   import { onMount } from 'svelte'
 
+  interface Props {
+    value?: string
+    class?: string
+    textarea?: HTMLTextAreaElement
+    onkeydown?: (e: KeyboardEvent) => void
+    oninit?: (textarea: HTMLTextAreaElement) => void
+  }
+
   let {
     value = $bindable(),
     class: className = '',
+    textarea = $bindable(),
     onkeydown = () => {},
-  }: { value: string; class?: string; onkeydown?: (e: KeyboardEvent) => void } = $props()
-  let textarea: HTMLTextAreaElement
+  }: Props = $props()
 
   function adjust_height() {
     if (textarea) {
@@ -23,6 +31,7 @@
 <textarea
   bind:this={textarea}
   bind:value
+  rows={1}
   class={`p-2 rounded border border-neutral-300 outline-none w-full text-base h-auto focus:border-primary-500 bg-gray-50 ${className}`}
   {onkeydown}
   oninput={adjust_height}

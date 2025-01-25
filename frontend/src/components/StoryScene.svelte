@@ -8,6 +8,7 @@
   import ImageOrSpinner from './ImageOrSpinner.svelte'
   import { settings } from '../lib/settings.svelte'
   import { g_state } from '../lib/state.svelte'
+  import Handlebars from 'handlebars'
 
   interface Prop {
     entry: StoryEntry

@@ -9,10 +9,11 @@
   import { ArrowUturnLeft, DocumentPlus } from 'svelte-heros-v2'
   import { preset, load_settings } from '../lib/settings.svelte'
   import { StoryEntryState } from '../types/story'
+  import FlexibleTextarea from './FlexibleTextarea.svelte'
 
   let nextId = 1
   let user_name = 'Julien'
-  let chatInputElement: HTMLInputElement
+  let chatInputElement: HTMLTextAreaElement | undefined = $state(undefined)
   let chatInputValue = $state('')
   let error: string | null = null
   let session_name: string = ''
@@ -127,7 +128,7 @@
   }
 
   async function handleChat(event: KeyboardEvent) {
-    if (event.key !== 'Enter') return
+    if (event.key !== 'Enter' || event.shiftKey || !chatInputElement) return
     if (!chatInputValue.trim()) return
 
     error = null
@@ -150,6 +151,9 @@
           image: null,
         },
       ]
+      if (chatInputElement) {
+        chatInputElement.rows = 1
+      }
       chatInputValue = ''
       await send_chat(g_state.story_entries, received_text)
       g_state.story_entries[g_state.story_entries.length - 1].state = StoryEntryState.WaitPrompt
@@ -328,8 +332,10 @@
 
   onMount(async () => {
     await start_chat()
-    chatInputElement?.focus()
     await load_settings()
+    setTimeout(() => {
+      chatInputElement?.focus()
+    }, 0)
   })
 </script>
 
@@ -363,9 +369,8 @@
   </div>
   <div class="chat-input-container">
     <span class="user-name">{user_name}:</span>
-    <input
-      bind:this={chatInputElement}
-      type="text"
+    <FlexibleTextarea
+      bind:textarea={chatInputElement}
       bind:value={chatInputValue}
       onkeydown={handleChat}
       class="chat-input"
