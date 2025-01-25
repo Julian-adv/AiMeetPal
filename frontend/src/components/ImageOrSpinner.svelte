@@ -1,18 +1,24 @@
 <script lang="ts">
   import { get_id } from '../lib/util'
   import { StoryEntryState } from '../types/story'
-  import { Popover } from 'svelte-5-ui-lib'
+  import { Popover, Button, Modal, uiHelpers } from 'svelte-5-ui-lib'
 
   interface Prop {
     width: number
     height: number
-    state: StoryEntryState
+    image_state: StoryEntryState
     image: string | null
     image_prompt?: string
     scale?: number
   }
-  let { width, height, state, image, image_prompt, scale = 0.45 }: Prop = $props()
+  let { width, height, image_state, image, image_prompt, scale = 0.45 }: Prop = $props()
   let popover_id = `scene-image${get_id()}`
+  const imageModal = uiHelpers()
+  let modalStatus = $state(false)
+  const closeModal = imageModal.close
+  $effect(() => {
+    modalStatus = imageModal.isOpen
+  })
 </script>
 
 <div
@@ -20,13 +26,13 @@
   class={width > height ? 'scene-image-wide' : 'scene-image'}
   style="--image-width: {width}px; --image-height: {height}px; --image-scale: {scale}"
 >
-  <div class="image-placeholder">
-    {#if state === StoryEntryState.WaitPrompt || state === StoryEntryState.WaitContent}
+  <button type="button" class="image-placeholder" onclick={imageModal.toggle}>
+    {#if image_state === StoryEntryState.WaitPrompt || image_state === StoryEntryState.WaitContent}
       <div class="spinner_square"></div>
-    {:else if state === StoryEntryState.WaitImage}
+    {:else if image_state === StoryEntryState.WaitImage}
       <div class="spinner_circle"></div>
     {/if}
-  </div>
+  </button>
   {#if image}
     <img src={image} alt="Scene visualization" />
   {/if}
@@ -36,6 +42,11 @@
     >{image_prompt}</Popover
   >
 {/if}
+<Modal size="lg" {modalStatus} {closeModal}>
+  <div class="flex flex-col items-center justify-center">
+    <img src={image} alt="Scene visualization" />
+  </div>
+</Modal>
 
 <style>
   .scene-image {
@@ -83,6 +94,7 @@
     justify-content: end;
     align-items: end;
     z-index: 1;
+    background: transparent;
   }
 
   .spinner_square {

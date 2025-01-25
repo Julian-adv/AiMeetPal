@@ -227,17 +227,6 @@
     }
   }
 
-  function get_prev_prompt(i: number) {
-    if (i > 0) {
-      return g_state.story_entries[i - 1].image_prompt ?? ''
-    }
-    if (g_state.selected_char?.info.description) {
-      const template = Handlebars.compile(g_state.selected_char.info.description)
-      return template({ char: g_state.selected_char.info.name, user: 'Julien' })
-    }
-    return 'character appearance: blonde\nenvironment: living room'
-  }
-
   function regenerate_content(i: number) {
     return async () => {
       if (i === g_state.story_entries.length - 1) {
@@ -304,7 +293,7 @@
     return null
   }
 
-  const image_generated = async () => {
+  const image_generated = async (entry: StoryEntry) => {
     try {
       if (session_char.image.startsWith('data:image/png;base64,')) {
         const path = await save_session_image('character', session_char.image)
@@ -314,10 +303,9 @@
       }
 
       // First save the image
-      const lastEntry = g_state.story_entries[g_state.story_entries.length - 1]
-      const path = await save_session_image(lastEntry.id.toString(), lastEntry.image)
+      const path = await save_session_image(entry.id.toString(), entry.image)
       if (path) {
-        lastEntry.image_path = path
+        entry.image_path = path
       }
 
       // Then save the session
@@ -348,13 +336,7 @@
 <div class="chat-container">
   <div class="story">
     {#each g_state.story_entries as entry, i (entry.id)}
-      <StoryScene
-        {entry}
-        prev_prompt={get_prev_prompt(i)}
-        regenerate_content={regenerate_content(i)}
-        index={i}
-        {image_generated}
-      />
+      <StoryScene {entry} regenerate_content={regenerate_content(i)} index={i} {image_generated} />
     {/each}
   </div>
 

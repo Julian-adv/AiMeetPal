@@ -7,20 +7,16 @@
   import { StoryEntryState } from '../types/story'
   import ImageOrSpinner from './ImageOrSpinner.svelte'
   import { settings } from '../lib/settings.svelte'
+  import { g_state } from '../lib/state.svelte'
 
-  let {
-    entry,
-    prev_prompt,
-    regenerate_content,
-    index,
-    image_generated,
-  }: {
+  interface Prop {
     entry: StoryEntry
-    prev_prompt: string
     regenerate_content: () => void
     index: number
-    image_generated: () => void
-  } = $props()
+    image_generated: (entry: StoryEntry) => void
+  }
+
+  let { entry, regenerate_content, index, image_generated }: Prop = $props()
   let width = $derived(entry.width ?? 832)
   let height = $derived(entry.height ?? 1216)
   let edit_mode = $state(false)
@@ -49,7 +45,19 @@
     await generate_initial_image()
   }
 
+  function get_prev_prompt(i: number) {
+    if (i > 1) {
+      return g_state.story_entries[i - 2].image_prompt ?? ''
+    }
+    if (g_state.selected_char?.info.description) {
+      const template = Handlebars.compile(g_state.selected_char.info.description)
+      return template({ char: g_state.selected_char.info.name, user: 'Julien' })
+    }
+    return 'character appearance: blonde\nenvironment: living room'
+  }
+
   async function generate_initial_image() {
+    const prev_prompt = get_prev_prompt(index)
     const { prompt, width, height } = await generate_prompt(entry.content, prev_prompt)
     entry.state = StoryEntryState.WaitImage
     entry.width = width
@@ -57,7 +65,7 @@
     entry.image_prompt = prompt
     entry.image = await generate_image(settings.checkpoint_name, prompt, width, height)
     entry.state = StoryEntryState.Image
-    image_generated()
+    image_generated(entry)
   }
 
   $effect(() => {
@@ -76,9 +84,10 @@
     <ImageOrSpinner
       {width}
       {height}
-      state={entry.state}
+      image_state={entry.state}
       image={entry.image}
       image_prompt={entry.image_prompt}
+      scale={width > height ? 0.61 : 0.45}
     />{/if}
   {#if entry.speaker}
     <span class="speaker">{entry.speaker}:</span>

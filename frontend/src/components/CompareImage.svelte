@@ -6,6 +6,7 @@
   import { StoryEntryState } from '../types/story'
   import { image_size, generate_image } from '../lib/generate_image.svelte'
   import { Button } from 'svelte-5-ui-lib'
+  import { load_settings } from '../lib/settings.svelte'
 
   interface CheckpointImage {
     state: StoryEntryState
@@ -71,6 +72,7 @@
   }
 
   onMount(async () => {
+    await load_settings()
     await refresh_checkpoints()
   })
 </script>
@@ -80,16 +82,16 @@
 <Button color="light" onclick={start_generate_image}>Generate</Button>
 <Button color="light" onclick={() => (stop = true)}>Stop</Button>
 <Button color="light" onclick={refresh_checkpoints}>Refresh</Button>
-<div class="mt-5 grid grid-cols-[1fr_2fr] gap-4">
+<div class="mt-5 grid grid-cols-[1fr_2fr] gap-1 justify-items-center">
   {#each checkpoints as checkpoint, i (checkpoint.name)}
-    <div>
+    <div class="justify-self-stretch col-span-2 flex items-center">
       {checkpoint.name}
+      <div class="ml-2 flex-grow h-px bg-zinc-200"></div>
     </div>
-    <div></div>
     <div>
       <ImageOrSpinner
         image={checkpoint.portrait.image}
-        state={checkpoint.portrait.state}
+        image_state={checkpoint.portrait.state}
         width={checkpoint.portrait.width}
         height={checkpoint.portrait.height}
         scale={0.4}
@@ -98,7 +100,7 @@
     <div>
       <ImageOrSpinner
         image={checkpoint.landscape.image}
-        state={checkpoint.landscape.state}
+        image_state={checkpoint.landscape.state}
         width={checkpoint.landscape.width}
         height={checkpoint.landscape.height}
         scale={0.4}
