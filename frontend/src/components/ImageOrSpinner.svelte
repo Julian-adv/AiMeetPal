@@ -20,15 +20,13 @@
   class={width > height ? 'scene-image-wide' : 'scene-image'}
   style="--image-width: {width}px; --image-height: {height}px; --image-scale: {scale}"
 >
-  {#if state === StoryEntryState.WaitPrompt || state === StoryEntryState.WaitContent}
-    <div class="image-placeholder">
+  <div class="image-placeholder">
+    {#if state === StoryEntryState.WaitPrompt || state === StoryEntryState.WaitContent}
       <div class="spinner_square"></div>
-    </div>
-  {:else if state === StoryEntryState.WaitImage}
-    <div class="image-placeholder">
+    {:else if state === StoryEntryState.WaitImage}
       <div class="spinner_circle"></div>
-    </div>
-  {/if}
+    {/if}
+  </div>
   {#if image}
     <img src={image} alt="Scene visualization" />
   {/if}

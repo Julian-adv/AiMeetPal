@@ -4,6 +4,7 @@ export enum StoryEntryState {
   WaitImage = 'wait_image',
   Image = 'image',
   NoImage = 'no_image',
+  NoSpinner = 'no_spinner',
 }
 
 export interface StoryEntry {

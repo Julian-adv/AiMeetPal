@@ -55,13 +55,13 @@
       return {
         name: checkpoint,
         portrait: {
-          state: StoryEntryState.WaitPrompt,
+          state: StoryEntryState.NoSpinner,
           image: null,
           width: width,
           height: height,
         },
         landscape: {
-          state: StoryEntryState.WaitPrompt,
+          state: StoryEntryState.NoSpinner,
           image: null,
           width: height,
           height: width,
