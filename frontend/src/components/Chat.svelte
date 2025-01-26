@@ -6,11 +6,13 @@
   import { onMount } from 'svelte'
   import Handlebars from 'handlebars'
   import { Button, Popover } from 'svelte-5-ui-lib'
-  import { ArrowUturnLeft, DocumentPlus } from 'svelte-heros-v2'
+  import { ArrowUturnLeft, DocumentArrowUp, DocumentPlus } from 'svelte-heros-v2'
   import { preset, load_settings } from '../lib/settings.svelte'
   import { StoryEntryState } from '../types/story'
   import FlexibleTextarea from './FlexibleTextarea.svelte'
   import { TBoxLineDesign } from 'svelte-remix'
+  import LoadSession from './LoadSession.svelte'
+  import type { Session } from '../types/session'
 
   let nextId = 1
   let user_name = 'Julien'
@@ -32,6 +34,7 @@
       image_prompt: '',
     },
   }
+  let load_session_modal: any = $state(false)
 
   function formatResponse(text: string): string {
     const match = text.match(
@@ -213,6 +216,29 @@
     }
   }
 
+  const load_session = async () => {
+    load_session_modal.toggle()
+  }
+
+  const on_init = (modal: any) => {
+    load_session_modal = modal
+  }
+
+  const on_load = async (session: Session) => {
+    session_char = session.selected_char
+    g_state.system_token_count = session.system_token_count
+    g_state.story_entries = session.story_entries
+    session_name = session.session_name
+    nextId = Math.max(...g_state.story_entries.map((entry) => entry.id)) + 1
+    // Load images for entries that have image_path
+    for (const entry of g_state.story_entries) {
+      if (entry.image_path && !entry.image) {
+        entry.image = `http://localhost:5000/data/${entry.image_path}`
+      }
+    }
+    await update_token_count()
+  }
+
   async function load_session_image(
     entry: StoryEntry,
     character_name: string,
@@ -244,20 +270,7 @@
       const lastSession = await load_last_session()
 
       if (lastSession.success && lastSession.session) {
-        session_char = lastSession.session.selected_char
-        g_state.system_token_count = lastSession.session.system_token_count
-        g_state.story_entries = lastSession.session.story_entries
-        session_name = lastSession.session_name
-        nextId = Math.max(...g_state.story_entries.map((entry) => entry.id)) + 1
-
-        // Load images for entries that have image_path
-        const character_name = g_state.selected_char.file_name.replace('.card', '')
-        for (const entry of g_state.story_entries) {
-          if (entry.image_path && !entry.image) {
-            await load_session_image(entry, character_name, session_name)
-          }
-        }
-        await update_token_count()
+        on_load(lastSession.session)
       } else {
         await new_session()
       }
@@ -403,6 +416,14 @@
       onclick={new_session}><DocumentPlus size="20" /></Button
     >
     <Popover triggeredBy="#new_session" class="text-sm p-2">Start a new session</Popover>
+    <Button
+      id="load_session"
+      color="light"
+      size="sm"
+      class="px-3 py-2 text-neutral-500"
+      onclick={load_session}><DocumentArrowUp size="20" /></Button
+    >
+    <Popover triggeredBy="#load_session" class="text-sm p-2">Load a saved session</Popover>
     <TBoxLineDesign size="24" class="text-neutral-300" />
     <div class="text-sm text-neutral-500">
       {token_count} / {preset.max_length}
@@ -418,6 +439,7 @@
     />
   </div>
 </div>
+<LoadSession {on_init} {on_load} />
 
 <style lang="postcss">
   .chat-container {

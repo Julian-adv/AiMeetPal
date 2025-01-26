@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 import os
 import uvicorn
 from dotenv import load_dotenv
@@ -17,6 +18,7 @@ os.environ["TF_ENABLE_ONEDNN_OPTS"] = "0"
 load_dotenv()
 
 app = FastAPI()
+app.mount("/data", StaticFiles(directory="../data"), name="data")
 
 # CORS Configuration
 app.add_middleware(

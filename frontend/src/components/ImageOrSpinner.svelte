@@ -1,7 +1,7 @@
 <script lang="ts">
   import { get_id } from '../lib/util'
   import { StoryEntryState } from '../types/story'
-  import { Popover, Button, Modal, uiHelpers } from 'svelte-5-ui-lib'
+  import { Popover, Modal, uiHelpers } from 'svelte-5-ui-lib'
 
   interface Prop {
     width: number

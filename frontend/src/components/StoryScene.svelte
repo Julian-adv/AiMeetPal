@@ -16,9 +16,10 @@
     regenerate_content: () => void
     index: number
     image_generated: (entry: StoryEntry) => void
+    disabled?: boolean
   }
 
-  let { entry, regenerate_content, index, image_generated }: Prop = $props()
+  let { entry, regenerate_content, index, image_generated, disabled }: Prop = $props()
   let width = $derived(entry.width ?? 832)
   let height = $derived(entry.height ?? 1216)
   let edit_mode = $state(false)
@@ -104,42 +105,44 @@
     <Button class="m-2" onclick={save_entry}>Save</Button>
   {:else}
     {@html highlightQuotes(entry.content)}
-    <div class="flex gap-0 items-center">
-      <Button
-        id="edit_content{index}"
-        color="light"
-        size="xs"
-        class="p-1 border-none text-neutral-400 focus:ring-0"
-        onclick={toggle_edit_mode}><PencilSquare size="20" /></Button
-      >
-      <Popover triggeredBy="#edit_content{index}" class="text-sm p-2">Edit content</Popover>
-      {#if entry.state !== 'no_image'}
+    {#if !disabled}
+      <div class="flex gap-0 items-center">
         <Button
-          id="regenerate_image{index}"
+          id="edit_content{index}"
           color="light"
           size="xs"
           class="p-1 border-none text-neutral-400 focus:ring-0"
-          onclick={regenerate_image}><Camera size="20" /></Button
+          onclick={toggle_edit_mode}><PencilSquare size="20" /></Button
         >
-        <Popover triggeredBy="#regenerate_image{index}" class="text-sm p-2"
-          >Regenerate image</Popover
-        >
-        <Button
-          id="regenerate_content{index}"
-          color="light"
-          size="xs"
-          class="p-1 border-none text-neutral-400 focus:ring-0"
-          onclick={regenerate_content}><ArrowPath size="20" /></Button
-        >
-        <Popover triggeredBy="#regenerate_content{index}" class="text-sm p-2"
-          >Regenerate content</Popover
-        >
-      {/if}
-      <TBoxLineDesign size="20" class="text-neutral-300" />
-      <div class="text-xs italic ml-1 text-neutral-300">
-        {entry.token_count}
+        <Popover triggeredBy="#edit_content{index}" class="text-sm p-2">Edit content</Popover>
+        {#if entry.state !== 'no_image'}
+          <Button
+            id="regenerate_image{index}"
+            color="light"
+            size="xs"
+            class="p-1 border-none text-neutral-400 focus:ring-0"
+            onclick={regenerate_image}><Camera size="20" /></Button
+          >
+          <Popover triggeredBy="#regenerate_image{index}" class="text-sm p-2"
+            >Regenerate image</Popover
+          >
+          <Button
+            id="regenerate_content{index}"
+            color="light"
+            size="xs"
+            class="p-1 border-none text-neutral-400 focus:ring-0"
+            onclick={regenerate_content}><ArrowPath size="20" /></Button
+          >
+          <Popover triggeredBy="#regenerate_content{index}" class="text-sm p-2"
+            >Regenerate content</Popover
+          >
+        {/if}
+        <TBoxLineDesign size="20" class="text-neutral-300" />
+        <div class="text-xs italic ml-1 text-neutral-300">
+          {entry.token_count}
+        </div>
       </div>
-    </div>
+    {/if}
   {/if}
 </div>
 

@@ -25,3 +25,31 @@ export async function get_checkpoints(): Promise<string[]> {
     return []
   }
 }
+
+export async function get_session_entries(char_name: string): Promise<string[]> {
+  try {
+    const path = `../data/sessions/${char_name}`
+    const entries = await get_dir_entries(path)
+    const sessions = entries.entries.map((entry: Entry) => entry.name)
+    return sessions
+  } catch (error) {
+    console.error('Error fetching session entries:', error)
+    return []
+  }
+}
+
+export async function get_session_json(char_name: string, session_name: string): Promise<any> {
+  try {
+    const response = await fetch(
+      `http://localhost:5000/data/sessions/${char_name}/${session_name}/session.json`
+    )
+    if (!response.ok) {
+      console.error('Failed to fetch session.json:', response.statusText)
+      return null
+    }
+    return await response.json()
+  } catch (error) {
+    console.error('Error fetching session.json:', error)
+    return null
+  }
+}
