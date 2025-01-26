@@ -9,6 +9,7 @@
   import { settings } from '../lib/settings.svelte'
   import { g_state } from '../lib/state.svelte'
   import Handlebars from 'handlebars'
+  import { TBoxLineDesign } from 'svelte-remix'
 
   interface Prop {
     entry: StoryEntry
@@ -103,34 +104,42 @@
     <Button class="m-2" onclick={save_entry}>Save</Button>
   {:else}
     {@html highlightQuotes(entry.content)}
-    <Button
-      id="edit_content{index}"
-      color="light"
-      size="xs"
-      class="p-1 ml-[-0.5rem] mt-[-0.5rem] border-none text-neutral-400 focus:ring-0"
-      onclick={toggle_edit_mode}><PencilSquare size="20" /></Button
-    >
-    <Popover triggeredBy="#edit_content{index}" class="text-sm p-2">Edit content</Popover>
-    {#if entry.state !== 'no_image'}
+    <div class="flex gap-0 items-center">
       <Button
-        id="regenerate_image{index}"
+        id="edit_content{index}"
         color="light"
         size="xs"
-        class="p-1 mt-[-0.5rem] border-none text-neutral-400 focus:ring-0"
-        onclick={regenerate_image}><Camera size="20" /></Button
+        class="p-1 border-none text-neutral-400 focus:ring-0"
+        onclick={toggle_edit_mode}><PencilSquare size="20" /></Button
       >
-      <Popover triggeredBy="#regenerate_image{index}" class="text-sm p-2">Regenerate image</Popover>
-      <Button
-        id="regenerate_content{index}"
-        color="light"
-        size="xs"
-        class="p-1 mt-[-0.5rem] border-none text-neutral-400 focus:ring-0"
-        onclick={regenerate_content}><ArrowPath size="20" /></Button
-      >
-      <Popover triggeredBy="#regenerate_content{index}" class="text-sm p-2"
-        >Regenerate content</Popover
-      >
-    {/if}
+      <Popover triggeredBy="#edit_content{index}" class="text-sm p-2">Edit content</Popover>
+      {#if entry.state !== 'no_image'}
+        <Button
+          id="regenerate_image{index}"
+          color="light"
+          size="xs"
+          class="p-1 border-none text-neutral-400 focus:ring-0"
+          onclick={regenerate_image}><Camera size="20" /></Button
+        >
+        <Popover triggeredBy="#regenerate_image{index}" class="text-sm p-2"
+          >Regenerate image</Popover
+        >
+        <Button
+          id="regenerate_content{index}"
+          color="light"
+          size="xs"
+          class="p-1 border-none text-neutral-400 focus:ring-0"
+          onclick={regenerate_content}><ArrowPath size="20" /></Button
+        >
+        <Popover triggeredBy="#regenerate_content{index}" class="text-sm p-2"
+          >Regenerate content</Popover
+        >
+      {/if}
+      <TBoxLineDesign size="20" class="text-neutral-300" />
+      <div class="text-xs italic ml-1 text-neutral-300">
+        {entry.token_count}
+      </div>
+    </div>
   {/if}
 </div>
 

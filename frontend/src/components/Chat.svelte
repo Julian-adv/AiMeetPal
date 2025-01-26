@@ -10,6 +10,7 @@
   import { preset, load_settings } from '../lib/settings.svelte'
   import { StoryEntryState } from '../types/story'
   import FlexibleTextarea from './FlexibleTextarea.svelte'
+  import { TBoxLineDesign } from 'svelte-remix'
 
   let nextId = 1
   let user_name = 'Julien'
@@ -55,10 +56,11 @@
   }
 
   async function send_chat(entries: StoryEntries, received: (text: string) => void) {
-    const chatEntries = entries.map(({ id, speaker, content }) => ({
+    const chatEntries = entries.map(({ id, speaker, content, token_count }) => ({
       id,
       speaker,
       content,
+      token_count,
     }))
 
     const response = await fetch('http://localhost:5000/api/chat', {
@@ -66,7 +68,11 @@
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ info: g_state.selected_char?.info, entries: chatEntries }),
+      body: JSON.stringify({
+        system_token_count: g_state.system_token_count,
+        info: g_state.selected_char?.info,
+        entries: chatEntries,
+      }),
     })
 
     if (!response.ok) {
@@ -79,6 +85,16 @@
     }
     const decoder = new TextDecoder()
 
+    g_state.story_entries = [
+      ...g_state.story_entries,
+      {
+        id: nextId++,
+        speaker: g_state.selected_char?.info.name ?? 'AI',
+        content: '',
+        state: StoryEntryState.WaitContent,
+        image: null,
+      },
+    ]
     while (true) {
       const { value, done } = await reader.read()
 
@@ -94,6 +110,9 @@
             if (data.text) {
               received(data.text)
             }
+            if (data.start_index !== undefined) {
+              g_state.start_index = data.start_index
+            }
           } catch (e) {
             console.error('Failed to parse JSON:', e)
           }
@@ -102,14 +121,14 @@
     }
   }
 
-  async function count_tokens(info: any, entries: StoryEntry[]) {
+  async function count_tokens(system_prompt: boolean, info: any, entry: StoryEntry) {
     try {
       const response = await fetch('http://localhost:5000/api/count-tokens', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ info, entries }),
+        body: JSON.stringify({ system_prompt, info, entry }),
       })
 
       const data = await response.json()
@@ -120,20 +139,43 @@
     }
   }
 
-  function update_token_count() {
-    count_tokens(g_state.selected_char?.info, g_state.story_entries).then((response) => {
-      token_count = response.total_tokens
-      g_state.story_entries[g_state.story_entries.length - 1].token_count = token_count
-    })
+  async function update_token_count() {
+    if (!g_state.selected_char) return
+    let total_tokens = 0
+    for (let i = g_state.story_entries.length - 1; i >= 0; i--) {
+      if (!g_state.story_entries[i].token_count) {
+        const response = await count_tokens(
+          false,
+          g_state.selected_char?.info,
+          g_state.story_entries[i]
+        )
+        g_state.story_entries[i].token_count = response.total_tokens
+      }
+      total_tokens += g_state.story_entries[i].token_count ?? 0
+    }
+    if (g_state.system_token_count === 0) {
+      const response = await count_tokens(
+        true,
+        g_state.selected_char?.info,
+        g_state.story_entries[0]
+      )
+      g_state.system_token_count = response.total_tokens
+    }
+    total_tokens += g_state.system_token_count
+    token_count = total_tokens
   }
 
   async function handleChat(event: KeyboardEvent) {
     if (event.key !== 'Enter' || event.shiftKey || !chatInputElement) return
     if (!chatInputValue.trim()) return
 
-    error = null
+    event.preventDefault()
+
+    // Wait for the next frame to ensure the Enter key event is fully processed
+    await new Promise((resolve) => requestAnimationFrame(resolve))
 
     try {
+      error = null
       g_state.story_entries = [
         ...g_state.story_entries,
         {
@@ -143,21 +185,11 @@
           state: StoryEntryState.NoImage,
           image: null,
         },
-        {
-          id: nextId++,
-          speaker: g_state.selected_char?.info.name ?? 'AI',
-          content: '',
-          state: StoryEntryState.WaitContent,
-          image: null,
-        },
       ]
-      if (chatInputElement) {
-        chatInputElement.rows = 1
-      }
       chatInputValue = ''
       await send_chat(g_state.story_entries, received_text)
       g_state.story_entries[g_state.story_entries.length - 1].state = StoryEntryState.WaitPrompt
-      update_token_count()
+      await update_token_count()
     } catch (e: unknown) {
       error = e instanceof Error ? e.message : 'An unknown error occurred'
     } finally {
@@ -213,6 +245,7 @@
 
       if (lastSession.success && lastSession.session) {
         session_char = lastSession.session.selected_char
+        g_state.system_token_count = lastSession.session.system_token_count
         g_state.story_entries = lastSession.session.story_entries
         session_name = lastSession.session_name
         nextId = Math.max(...g_state.story_entries.map((entry) => entry.id)) + 1
@@ -224,9 +257,9 @@
             await load_session_image(entry, character_name, session_name)
           }
         }
-        update_token_count()
+        await update_token_count()
       } else {
-        new_session()
+        await new_session()
       }
     }
   }
@@ -238,22 +271,23 @@
         g_state.story_entries[g_state.story_entries.length - 1].state = StoryEntryState.WaitContent
         await send_chat(g_state.story_entries, received_text)
         g_state.story_entries[g_state.story_entries.length - 1].state = StoryEntryState.WaitPrompt
+        await update_token_count()
       }
     }
   }
 
-  const go_back = () => {
+  const go_back = async () => {
     chatInputValue = g_state.story_entries[g_state.story_entries.length - 2].content
     g_state.story_entries = g_state.story_entries.slice(0, g_state.story_entries.length - 2)
     const count = g_state.story_entries[g_state.story_entries.length - 1].token_count
     if (count) {
       token_count = count
     } else {
-      update_token_count()
+      await update_token_count()
     }
   }
 
-  const new_session = () => {
+  const new_session = async () => {
     if (g_state.selected_char) {
       const template = Handlebars.compile(g_state.selected_char.info.first_mes)
       g_state.story_entries = [
@@ -271,7 +305,7 @@
       g_state.story_entries[0].speaker = g_state.selected_char.info.name
       session_name = new Date().toLocaleString('sv').replace(/:/g, '-')
       session_char = { ...g_state.selected_char }
-      update_token_count()
+      await update_token_count()
     }
   }
 
@@ -315,6 +349,7 @@
       // Then save the session
       const payload = {
         session_name: session_name,
+        system_token_count: g_state.system_token_count,
         selected_char: session_char,
         story_entries: g_state.story_entries.map(({ image, ...entry }) => entry),
       }
@@ -342,6 +377,9 @@
 <div class="chat-container">
   <div class="story">
     {#each g_state.story_entries as entry, i (entry.id)}
+      {#if i === g_state.start_index}
+        <div class="context-separator"></div>
+      {/if}
       <StoryScene {entry} regenerate_content={regenerate_content(i)} index={i} {image_generated} />
     {/each}
   </div>
@@ -365,7 +403,10 @@
       onclick={new_session}><DocumentPlus size="20" /></Button
     >
     <Popover triggeredBy="#new_session" class="text-sm p-2">Start a new session</Popover>
-    <div class="text-sm text-neutral-500">Tokens: {token_count} / {preset.max_length}</div>
+    <TBoxLineDesign size="24" class="text-neutral-300" />
+    <div class="text-sm text-neutral-500">
+      {token_count} / {preset.max_length}
+    </div>
   </div>
   <div class="chat-input-container">
     <span class="user-name">{user_name}:</span>
@@ -404,5 +445,10 @@
     border: 1px solid #ccc;
     border-radius: 4px;
     @apply focus:ring-2 ring-sky-500 outline-none;
+  }
+
+  .context-separator {
+    border-top: 2px dotted #ff4444;
+    margin: 8px 0;
   }
 </style>

@@ -24,6 +24,7 @@ class StoryEntry(BaseModel):
 
 class Session(BaseModel):
     session_name: str
+    system_token_count: int
     selected_char: Character
     story_entries: list[dict]
 

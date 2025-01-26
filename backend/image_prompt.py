@@ -54,7 +54,8 @@ def scene_to_prompt(scene: SceneContent):
 
         with httpx.Client(timeout=httpx.Timeout(60.0, connect=30.0)) as client:
             print("generating image prompt...")
-            print(payload)
+            print(f"prev_image_prompt: {scene.prev_image_prompt}")
+            print(f"content: {scene.content}")
             response = client.post(
                 "https://api.totalgpt.ai/v1/completions",
                 headers={
