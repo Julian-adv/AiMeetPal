@@ -3,7 +3,7 @@
   import type { Character } from '../types/character'
   import StoryScene from './StoryScene.svelte'
   import { g_state } from '../lib/state.svelte'
-  import { onMount } from 'svelte'
+  import { onMount, tick } from 'svelte'
   import Handlebars from 'handlebars'
   import { Button, Popover } from 'svelte-5-ui-lib'
   import { ArrowUturnLeft, DocumentArrowUp, DocumentPlus } from 'svelte-heros-v2'
@@ -98,6 +98,9 @@
         image: null,
       },
     ]
+
+    await scrollToBottom()
+
     while (true) {
       const { value, done } = await reader.read()
 
@@ -122,6 +125,13 @@
         }
       }
     }
+  }
+
+  async function scrollToBottom() {
+    await tick()
+    const content_container = document.querySelector('.chat-container')
+    if (!content_container) return
+    window.scrollTo(0, content_container.scrollHeight)
   }
 
   async function count_tokens(system_prompt: boolean, info: any, entry: StoryEntry) {

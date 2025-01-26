@@ -91,6 +91,7 @@
       image={entry.image}
       image_prompt={entry.image_prompt}
       scale={width > height ? 0.61 : 0.45}
+      {disabled}
     />{/if}
   {#if entry.speaker}
     <span class="speaker">{entry.speaker}:</span>

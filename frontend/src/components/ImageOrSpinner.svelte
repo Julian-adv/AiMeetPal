@@ -10,8 +10,17 @@
     image: string | null
     image_prompt?: string
     scale?: number
+    disabled?: boolean
   }
-  let { width, height, image_state, image, image_prompt, scale = 0.45 }: Prop = $props()
+  let {
+    width,
+    height,
+    image_state,
+    image,
+    image_prompt,
+    scale = 0.45,
+    disabled = false,
+  }: Prop = $props()
   let popover_id = `scene-image${get_id()}`
   const imageModal = uiHelpers()
   let modalStatus = $state(false)
@@ -26,7 +35,7 @@
   class={width > height ? 'scene-image-wide' : 'scene-image'}
   style="--image-width: {width}px; --image-height: {height}px; --image-scale: {scale}"
 >
-  <button type="button" class="image-placeholder" onclick={imageModal.toggle}>
+  <button type="button" class="image-placeholder" onclick={imageModal.toggle} {disabled}>
     {#if image_state === StoryEntryState.WaitPrompt || image_state === StoryEntryState.WaitContent}
       <div class="spinner_square"></div>
     {:else if image_state === StoryEntryState.WaitImage}
