@@ -5,20 +5,6 @@ from fastapi import APIRouter, HTTPException
 router = APIRouter()
 settings = None
 
-default_settings = {
-    "api_type": "openai",
-    "infermaticAiApiKey": "your api key",
-    "openAiApiKey": "your api key",
-    "customUrl": "https://api.kluster.ai/v1",
-    "preset": "anthracite-org-magnum-v4-72b-FP8-Dynamic-preset.json",
-    "instruct": "anthracite-org-magnum-v4-72b-FP8-Dynamic-instruct.json",
-    "context": "anthracite-org-magnum-v4-72b-FP8-Dynamic-context.json",
-    "model": "anthracite-org-magnum-v4-72b-FP8-Dynamic",
-    "max_tokens": 1024,
-    "checkpoints_folder": "../data/checkpoints",
-    "checkpoint_name": "",
-}
-
 def get_data_path(subpath):
     return str(pathlib.Path(__file__).parent.parent / "data" / subpath)
 
@@ -29,33 +15,48 @@ def load_settings(reload=False):
             with open(get_data_path('settings.json'), "r") as f:
                 settings = json.load(f)
         except FileNotFoundError:
-            settings = default_settings
+            settings = {}
 
     return settings
 
+def load_api_settings():
+    settings = load_settings()
+    if settings['api_type'] == 'infermatic':
+        return settings['infermaticai']
+    elif settings['api_type'] == 'openai':
+        return settings['openai']
+
 def load_preset():
     settings = load_settings()
-    with open(get_data_path(settings['preset']), "r") as f:
+    if settings['api_type'] == 'infermatic':
+        path = get_data_path(settings['infermaticai']['preset'])
+    elif settings['api_type'] == 'openai':
+        path = get_data_path(settings['openai']['preset'])
+    with open(path, "r") as f:
         return json.load(f)
 
 def load_instruct():
     settings = load_settings()
-    with open(get_data_path(settings['instruct']), "r") as f:
-        return json.load(f)
+    if settings['api_type'] == 'infermatic':
+        path = get_data_path(settings['infermaticai']['instruct'])
+        with open(path, "r") as f:
+            return json.load(f)
+    return {}
 
 def load_context():
     settings = load_settings()
-    with open(get_data_path(settings['context']), "r") as f:
-        return json.load(f)
+    if settings['api_type'] == 'infermatic':
+        path = get_data_path(settings['infermaticai']['context'])
+        with open(path, "r") as f:
+            return json.load(f)
+    return {}
 
 @router.get("/api/settings")
 async def load_settings_api():
     settings = load_settings(reload=True)
-    preset = load_preset()
     try:
         return {
             "settings": settings,
-            "preset": preset
         }
     except Exception as e:
         print(f"Error loading settings: {e}")

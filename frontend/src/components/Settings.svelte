@@ -27,7 +27,7 @@
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${settings.infermaticAiApiKey}`,
+          Authorization: `Bearer ${settings.infermaticai.api_key}`,
         },
       })
       if (response.ok) {
@@ -140,31 +140,39 @@
       <Input
         type="password"
         class="focus:ring-2 ring-sky-500"
-        bind:value={settings.infermaticAiApiKey}
+        bind:value={settings.infermaticai.api_key}
       />
       <div class="label">Preset</div>
-      <Input class="focus:ring-2 ring-sky-500" bind:value={settings.preset} />
+      <Input class="focus:ring-2 ring-sky-500" bind:value={settings.infermaticai.preset} />
       <div class="label">Instruct</div>
-      <Input class="focus:ring-2 ring-sky-500" bind:value={settings.instruct} />
+      <Input class="focus:ring-2 ring-sky-500" bind:value={settings.infermaticai.instruct} />
       <div class="label">Context</div>
-      <Input class="focus:ring-2 ring-sky-500" bind:value={settings.context} />
+      <Input class="focus:ring-2 ring-sky-500" bind:value={settings.infermaticai.context} />
       <div class="label">Language model</div>
       <div>
-        <select bind:value={settings.model}>
+        <select bind:value={settings.infermaticai.model}>
           {#each language_models as model}
             <option value={model}>{model}</option>
           {/each}
         </select>
       </div>
+      <div class="label">Max tokens</div>
+      <Input class="focus:ring-2 ring-sky-500" bind:value={settings.infermaticai.max_tokens} />
     {/if}
     {#if settings.api_type === 'openai'}
       <div class="label">Custom URL</div>
-      <Input class="focus:ring-2 ring-sky-500" bind:value={settings.customUrl} />
+      <Input class="focus:ring-2 ring-sky-500" bind:value={settings.openai.custom_url} />
       <div class="label">API key</div>
-      <Input type="password" class="focus:ring-2 ring-sky-500" bind:value={settings.openAiApiKey} />
+      <Input
+        type="password"
+        class="focus:ring-2 ring-sky-500"
+        bind:value={settings.openai.api_key}
+      />
+      <div class="label">Preset</div>
+      <Input class="focus:ring-2 ring-sky-500" bind:value={settings.openai.preset} />
+      <div class="label">Max tokens</div>
+      <Input class="focus:ring-2 ring-sky-500" bind:value={settings.openai.max_tokens} />
     {/if}
-    <div class="label">Max tokens</div>
-    <Input class="focus:ring-2 ring-sky-500" bind:value={settings.max_tokens} />
     <div class="label">Image model folder</div>
     <div class="folder-select">
       <Input class="focus:ring-2 ring-sky-500" bind:value={settings.checkpoints_folder} />

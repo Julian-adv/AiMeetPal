@@ -1,7 +1,7 @@
 from fastapi import APIRouter
 from pydantic import BaseModel
 import httpx
-from settings import load_settings
+from settings import load_api_settings
 from chat_common import ChatEntry, CharInfo
 from prompt import make_prompt, make_prompt_single
 
@@ -16,7 +16,7 @@ class TokenMessage(BaseModel):
 @router.post("/api/count-tokens")
 async def count_tokens(message: TokenMessage):
     try:
-        settings = load_settings()
+        settings = load_api_settings()
         wiBefore = ""
         wiAfter = ""
         persona = "Julien is living alone in a luxury mansion."
@@ -32,7 +32,7 @@ async def count_tokens(message: TokenMessage):
                     "prompt": prompt
                 },
                 headers={
-                    "Authorization": f"Bearer {settings['infermaticAiApiKey']}",
+                    "Authorization": f"Bearer {settings['api_key']}",
                     "Content-Type": "application/json"
                 }
             )

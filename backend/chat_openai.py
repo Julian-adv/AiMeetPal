@@ -1,7 +1,8 @@
 from chat_common import ChatMessage
+from prompt_openai import make_openai_prompt
 
 async def chat_openai(message: ChatMessage):
-    settings = load_settings()
+    settings = load_api_settings()
     preset = load_preset()
     async def generate():
         async with httpx.AsyncClient() as client:
@@ -9,9 +10,11 @@ async def chat_openai(message: ChatMessage):
             wiAfter = ""
             persona = "Julien is living alone in a luxury mansion."
             user = "Julien"
-            start_index = find_start_index(message.system_token_count, message.entries, preset["max_length"] - settings["max_tokens"], user)
+            start_index = find_start_index(message.system_token_count, message.entries, preset["openai_max_context"] - settings["max_tokens"], user)
             print(f"start_index: {start_index}")
-            prompt = make_prompt(user, message.info.name, wiBefore, message.info.description, message.info.personality, message.info.scenario, wiAfter, persona, message.entries, start_index)
+            prompt = make_openai_prompt(user, message.info.name, wiBefore, message.info.description, message.info.personality, message.info.scenario, wiAfter, persona, message.entries, start_index)
+            print(prompt)
+            return
             payload = make_payload(prompt, settings, preset)
 
             async with client.stream(
@@ -19,7 +22,7 @@ async def chat_openai(message: ChatMessage):
                 "https://api.totalgpt.ai/v1/completions",
                 json=payload,
                 headers={
-                    "Authorization": f"Bearer {settings['infermaticAiApiKey']}",
+                    "Authorization": f"Bearer {settings['api_key']}",
                     "Content-Type": "application/json"
                 }
             ) as response:

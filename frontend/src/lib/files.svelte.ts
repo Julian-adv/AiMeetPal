@@ -53,3 +53,23 @@ export async function get_session_json(char_name: string, session_name: string):
     return null
   }
 }
+
+export async function load_json(path: string): Promise<any | null> {
+  try {
+    const response = await fetch(`http://localhost:5000/data/${path}`, {
+      cache: 'no-store',  
+      headers: {
+        'Cache-Control': 'no-cache',
+        'Pragma': 'no-cache'
+      }
+    })
+    if (response.ok) {
+      const data = await response.json()
+      return data
+    }
+    return null
+  } catch (error) {
+    console.error('Error fetching file:', error)
+    return null
+  }
+}

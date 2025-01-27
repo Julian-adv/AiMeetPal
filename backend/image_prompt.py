@@ -1,7 +1,7 @@
 from fastapi import HTTPException, APIRouter
 from pydantic import BaseModel
 import httpx
-from settings import load_settings, load_preset
+from settings import load_api_settings, load_preset
 from payload import make_payload
 
 router = APIRouter()
@@ -15,7 +15,7 @@ class ImagePrompt(BaseModel):
 
 @router.post("/api/scene-to-prompt")
 def scene_to_prompt(scene: SceneContent):
-    settings = load_settings()
+    settings = load_api_settings()
     preset = load_preset()
     try:
         system_prompt = (
@@ -59,7 +59,7 @@ def scene_to_prompt(scene: SceneContent):
             response = client.post(
                 "https://api.totalgpt.ai/v1/completions",
                 headers={
-                    "Authorization": f"Bearer {settings['infermaticAiApiKey']}",
+                    "Authorization": f"Bearer {settings['api_key']}",
                     "Content-Type": "application/json"
                 },
                 json=payload

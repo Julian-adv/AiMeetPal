@@ -1,13 +1,13 @@
 import httpx
 import json
 from fastapi.responses import StreamingResponse
-from settings import load_settings, load_preset
+from settings import load_api_settings, load_preset
 from chat_common import ChatMessage, find_start_index
 from prompt import make_prompt
 from payload import make_payload
 
 async def chat_infermaticai(message: ChatMessage):
-    settings = load_settings()
+    settings = load_api_settings()
     preset = load_preset()
     async def generate():
         async with httpx.AsyncClient() as client:
@@ -25,7 +25,7 @@ async def chat_infermaticai(message: ChatMessage):
                 "https://api.totalgpt.ai/v1/completions",
                 json=payload,
                 headers={
-                    "Authorization": f"Bearer {settings['infermaticAiApiKey']}",
+                    "Authorization": f"Bearer {settings['api_key']}",
                     "Content-Type": "application/json"
                 }
             ) as response:
