@@ -34,7 +34,7 @@ async function generate_image(
   width: number,
   height: number
 ) {
-  const prefix = 'score_9, score_8_up, score_7_up'
+  const prefix = 'score_9, score_8_up, score_7_up, score_6_up'
   const response = await fetch('http://localhost:5000/api/generate-image', {
     method: 'POST',
     headers: {

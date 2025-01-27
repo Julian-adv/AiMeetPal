@@ -1,5 +1,8 @@
 interface Settings {
+  api_type: 'infermatic' | 'openai'
   infermaticAiApiKey: string
+  openAiApiKey: string
+  customUrl: string
   preset: string
   instruct: string
   context: string
@@ -10,7 +13,10 @@ interface Settings {
 }
 
 export const settings: Settings = $state({
+  api_type: 'infermatic',
   infermaticAiApiKey: 'your api key',
+  openAiApiKey: 'your api key',
+  customUrl: 'https://api.infermatic.ai',
   preset: 'anthracite-org-magnum-v4-72b-FP8-Dynamic-preset.json',
   instruct: 'anthracite-org-magnum-v4-72b-FP8-Dynamic-instruct.json',
   context: 'anthracite-org-magnum-v4-72b-FP8-Dynamic-context.json',

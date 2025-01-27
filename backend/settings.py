@@ -1,20 +1,23 @@
 import json
 import pathlib
 from fastapi import APIRouter, HTTPException
-from pydantic import BaseModel
 
 router = APIRouter()
 settings = None
 
-class Settings(BaseModel):
-    infermaticAiApiKey: str
-    preset: str
-    instruct: str
-    context: str
-    model: str
-    max_tokens: int
-    checkpoints_folder: str
-    checkpoint_name: str
+default_settings = {
+    "api_type": "openai",
+    "infermaticAiApiKey": "your api key",
+    "openAiApiKey": "your api key",
+    "customUrl": "https://api.kluster.ai/v1",
+    "preset": "anthracite-org-magnum-v4-72b-FP8-Dynamic-preset.json",
+    "instruct": "anthracite-org-magnum-v4-72b-FP8-Dynamic-instruct.json",
+    "context": "anthracite-org-magnum-v4-72b-FP8-Dynamic-context.json",
+    "model": "anthracite-org-magnum-v4-72b-FP8-Dynamic",
+    "max_tokens": 1024,
+    "checkpoints_folder": "../data/checkpoints",
+    "checkpoint_name": "",
+}
 
 def get_data_path(subpath):
     return str(pathlib.Path(__file__).parent.parent / "data" / subpath)
@@ -26,16 +29,7 @@ def load_settings(reload=False):
             with open(get_data_path('settings.json'), "r") as f:
                 settings = json.load(f)
         except FileNotFoundError:
-            settings = {
-                "infermaticAiApiKey": "your_api_key_here",
-                "preset": "anthracite-org-magnum-v4-72b-FP8-Dynamic-preset.json",
-                "instruct": "anthracite-org-magnum-v4-72b-FP8-Dynamic-instruct.json",
-                "context": "anthracite-org-magnum-v4-72b-FP8-Dynamic-context.json",
-                "model": "anthracite-org-magnum-v4-72b-FP8-Dynamic",
-                "max_tokens": 1024,
-                "checkpoints_folder": ".",
-                "checkpoint_name": ""
-            }
+            settings = default_settings
 
     return settings
 
@@ -68,9 +62,8 @@ async def load_settings_api():
         raise HTTPException(status_code=500, detail=str(e))
 
 @router.post("/api/save_settings")
-async def save_settings(data: Settings):
-    print(data)
+async def save_settings(data: dict):
     with open(get_data_path('settings.json'), "w") as f:
-        json.dump(data.model_dump(), f, indent=2)
+        json.dump(data, f, indent=2)
     load_settings(reload=True)
     return {"success": True}

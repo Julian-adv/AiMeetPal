@@ -2,7 +2,7 @@ from fastapi import APIRouter
 from pydantic import BaseModel
 import httpx
 from settings import load_settings
-from chat import ChatEntry, CharInfo
+from chat_common import ChatEntry, CharInfo
 from prompt import make_prompt, make_prompt_single
 
 router = APIRouter()

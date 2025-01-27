@@ -128,22 +128,41 @@
 <h2>Settings</h2>
 <div class="settings-container">
   <div class="settings">
-    <div class="label">Infermatic.ai API key</div>
-    <Input class="focus:ring-2 ring-sky-500" bind:value={settings.infermaticAiApiKey} />
-    <div class="label">Preset</div>
-    <Input class="focus:ring-2 ring-sky-500" bind:value={settings.preset} />
-    <div class="label">Instruct</div>
-    <Input class="focus:ring-2 ring-sky-500" bind:value={settings.instruct} />
-    <div class="label">Context</div>
-    <Input class="focus:ring-2 ring-sky-500" bind:value={settings.context} />
-    <div class="label">Language model</div>
+    <div class="label">API type</div>
     <div>
-      <select bind:value={settings.model}>
-        {#each language_models as model}
-          <option value={model}>{model}</option>
-        {/each}
+      <select bind:value={settings.api_type}>
+        <option value="infermatic">Infermatic.ai</option>
+        <option value="openai">OpenAI Compatible</option>
       </select>
     </div>
+    {#if settings.api_type === 'infermatic'}
+      <div class="label">Infermatic.ai API key</div>
+      <Input
+        type="password"
+        class="focus:ring-2 ring-sky-500"
+        bind:value={settings.infermaticAiApiKey}
+      />
+      <div class="label">Preset</div>
+      <Input class="focus:ring-2 ring-sky-500" bind:value={settings.preset} />
+      <div class="label">Instruct</div>
+      <Input class="focus:ring-2 ring-sky-500" bind:value={settings.instruct} />
+      <div class="label">Context</div>
+      <Input class="focus:ring-2 ring-sky-500" bind:value={settings.context} />
+      <div class="label">Language model</div>
+      <div>
+        <select bind:value={settings.model}>
+          {#each language_models as model}
+            <option value={model}>{model}</option>
+          {/each}
+        </select>
+      </div>
+    {/if}
+    {#if settings.api_type === 'openai'}
+      <div class="label">Custom URL</div>
+      <Input class="focus:ring-2 ring-sky-500" bind:value={settings.customUrl} />
+      <div class="label">API key</div>
+      <Input type="password" class="focus:ring-2 ring-sky-500" bind:value={settings.openAiApiKey} />
+    {/if}
     <div class="label">Max tokens</div>
     <Input class="focus:ring-2 ring-sky-500" bind:value={settings.max_tokens} />
     <div class="label">Image model folder</div>

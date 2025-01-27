@@ -65,6 +65,13 @@
       content,
       token_count,
     }))
+    // Remove the last entry if it's a placeholder
+    if (
+      chatEntries[chatEntries.length - 1].speaker !== 'Julien' &&
+      chatEntries[chatEntries.length - 1].content === ''
+    ) {
+      chatEntries.splice(-1, 1)
+    }
 
     const response = await fetch('http://localhost:5000/api/chat', {
       method: 'POST',
@@ -87,17 +94,6 @@
       throw new Error('Failed to get response reader')
     }
     const decoder = new TextDecoder()
-
-    g_state.story_entries = [
-      ...g_state.story_entries,
-      {
-        id: nextId++,
-        speaker: g_state.selected_char?.info.name ?? 'AI',
-        content: '',
-        state: StoryEntryState.WaitContent,
-        image: null,
-      },
-    ]
 
     await scrollToBottom()
 
@@ -198,14 +194,21 @@
           state: StoryEntryState.NoImage,
           image: null,
         },
+        {
+          id: nextId++,
+          speaker: g_state.selected_char?.info.name ?? 'AI',
+          content: '',
+          state: StoryEntryState.WaitContent,
+          image: null,
+        },
       ]
+
       chatInputValue = ''
       await send_chat(g_state.story_entries, received_text)
       g_state.story_entries[g_state.story_entries.length - 1].state = StoryEntryState.WaitPrompt
       await update_token_count()
     } catch (e: unknown) {
       error = e instanceof Error ? e.message : 'An unknown error occurred'
-    } finally {
     }
   }
 
@@ -300,13 +303,16 @@
   }
 
   const go_back = async () => {
-    chatInputValue = g_state.story_entries[g_state.story_entries.length - 2].content
-    g_state.story_entries = g_state.story_entries.slice(0, g_state.story_entries.length - 2)
-    const count = g_state.story_entries[g_state.story_entries.length - 1].token_count
-    if (count) {
-      token_count = count
-    } else {
-      await update_token_count()
+    // Find the last Julien entry from the end
+    let lastJulienIndex = g_state.story_entries.length - 1
+    while (lastJulienIndex >= 0 && g_state.story_entries[lastJulienIndex].speaker !== 'Julien') {
+      lastJulienIndex--
+    }
+
+    if (lastJulienIndex >= 0) {
+      chatInputValue = g_state.story_entries[lastJulienIndex].content
+      // Remove all entries after the last Julien entry
+      g_state.story_entries.length = lastJulienIndex
     }
   }
 
