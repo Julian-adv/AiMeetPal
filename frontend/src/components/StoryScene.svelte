@@ -10,6 +10,7 @@
   import { g_state } from '../lib/state.svelte'
   import Handlebars from 'handlebars'
   import { TBoxLineDesign } from 'svelte-remix'
+  import { onMount } from 'svelte'
 
   interface Prop {
     entry: StoryEntry
@@ -24,6 +25,7 @@
   let height = $derived(entry.height ?? 1216)
   let edit_mode = $state(false)
   let edit_textarea: HTMLTextAreaElement | null = $state(null)
+  let lastScale = 1
 
   function adjust_height() {
     if (edit_textarea) {
@@ -80,6 +82,57 @@
   async function regenerate_image() {
     entry.state = StoryEntryState.WaitPrompt
   }
+
+  function on_think_click(this: HTMLElement) {
+    const thinkElement = this.closest('.think')
+    if (thinkElement) {
+      thinkElement.classList.toggle('collapsed')
+    }
+  }
+
+  function setup_think_buttons() {
+    const think_buttons = document.querySelectorAll('.think-toggle')
+    think_buttons.forEach((button) => {
+      button.addEventListener('click', on_think_click)
+    })
+  }
+
+  function get_thinking_tag(thinking: boolean) {
+    if (thinking) {
+      lastScale = lastScale === 1 ? 1.1 : 1
+    } else {
+      lastScale = 1
+    }
+    return `<div class="think collapsed ${thinking ? 'thinking' : ''}"><button class="think-toggle">▼</button><div class="spinner">${thinking ? 'thinking' : 'thought'}<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6" style="transform: scale(${lastScale})">
+  <path stroke-linecap="round" stroke-linejoin="round" d="M8.625 12a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0H8.25m4.125 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0H12m4.125 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm0 0h-.375M21 12c0 4.556-4.03 8.25-9 8.25a9.764 9.764 0 0 1-2.555-.337A5.972 5.972 0 0 1 5.41 20.97a5.969 5.969 0 0 1-.474-.065 4.48 4.48 0 0 0 .978-2.025c.09-.457-.133-.901-.467-1.226C3.93 16.178 3 14.189 3 12c0-4.556 4.03-8.25 9-8.25s9 3.694 9 8.25Z" />
+</svg>
+</div><span class="think-content">$1</span></div>`
+  }
+
+  function process_thinking(content: string) {
+    const think_complete_regex = /<think>(.+?)<\/think>/s
+    const thinking_regex = /<think>(.+?)$/s
+
+    const think_complete = content.match(think_complete_regex)
+    if (think_complete) {
+      const replace_str = get_thinking_tag(false)
+      const processed = content.replace(think_complete_regex, replace_str)
+      // Set up button events asynchronously
+      setTimeout(setup_think_buttons, 0)
+      return processed
+    } else {
+      const thinking = content.match(thinking_regex)
+      if (thinking) {
+        const replace_str = get_thinking_tag(true)
+        return content.replace(thinking_regex, replace_str)
+      }
+    }
+    return content
+  }
+
+  onMount(() => {
+    setup_think_buttons()
+  })
 </script>
 
 <div class="story-scene">
@@ -105,7 +158,7 @@
     ></textarea>
     <Button class="m-2" onclick={save_entry}>Save</Button>
   {:else}
-    {@html highlightQuotes(entry.content)}
+    {@html process_thinking(highlightQuotes(entry.content))}
     {#if !disabled}
       <div class="flex gap-0 items-center">
         <Button
@@ -165,6 +218,51 @@
 
   .story-scene :global .quoted-text {
     color: theme('colors.blue.800');
+  }
+
+  .story-scene :global .think {
+    color: theme('colors.gray.400');
+  }
+
+  .story-scene :global .think-toggle {
+    background: none;
+    border: none;
+    color: inherit;
+    cursor: pointer;
+    padding: 0;
+    font-size: 0.8em;
+    transition: transform 0.2s;
+    margin-top: 0.25rem;
+  }
+
+  .story-scene :global .think .spinner {
+    display: none;
+  }
+
+  .story-scene :global .think.collapsed .spinner {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    font-style: italic;
+    margin-left: 0.5rem;
+  }
+
+  .story-scene :global .think.collapsed .think-content {
+    display: none;
+  }
+
+  .story-scene :global .think.collapsed .think-toggle {
+    transform: rotate(-90deg);
+  }
+
+  .story-scene :global .think.collapsed .spinner svg {
+    display: none;
+    transform-origin: center;
+    transition: transform 0.4s ease-in-out;
+  }
+
+  .story-scene :global .think.collapsed.thinking .spinner svg {
+    display: inline;
   }
 
   .speaker {

@@ -74,8 +74,12 @@ async def chat_openai(message: ChatMessage):
                                     break
                                 try:
                                     json_data = json.loads(data)
+                                    print(f"json_data: {json_data}")
+                                    choices = json_data.get("choices")
+                                    if len(choices) == 0:
+                                        continue
                                     if (
-                                        text := json_data.get("choices", [{}])[0]
+                                        text := choices[0]
                                         .get("delta", {})
                                         .get("content")
                                     ):
