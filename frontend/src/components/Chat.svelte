@@ -164,7 +164,7 @@
       }
       total_tokens += g_state.story_entries[i].token_count ?? 0
     }
-    if (g_state.system_token_count === 0) {
+    if (g_state.system_token_count === 0 || g_state.system_token_count === undefined) {
       const response = await count_tokens(
         true,
         g_state.selected_char?.info,

@@ -24,36 +24,15 @@
 
   async function get_language_models() {
     try {
-      if (settings.api_type === 'infermaticai') {
-        const response = await fetch('https://api.totalgpt.ai/v1/models', {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${settings.infermaticai.api_key}`,
-          },
-        })
-        if (response.ok) {
-          const data = await response.json()
-          const models = data.data.map((model: any) => model.id)
-          return models.sort((a: string, b: string) =>
-            a.toLowerCase().localeCompare(b.toLowerCase())
-          )
-        }
-      } else if (settings.api_type === 'openai') {
-        const response = await fetch(`${settings.openai.custom_url}/models`, {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${settings.openai.api_key}`,
-          },
-        })
-        if (response.ok) {
-          const data = await response.json()
-          const models = data.data.map((model: any) => model.id)
-          return models.sort((a: string, b: string) =>
-            a.toLowerCase().localeCompare(b.toLowerCase())
-          )
-        }
+      const response = await fetch('http://localhost:5000/api/models', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      })
+      if (response.ok) {
+        const result = await response.json()
+        return result.models
       }
     } catch (error) {
       console.error('Error fetching model list:', error)
@@ -177,7 +156,11 @@
         </select>
       </div>
       <div class="label">Max tokens</div>
-      <Input class="focus:ring-2 ring-sky-500" bind:value={settings.infermaticai.max_tokens} />
+      <Input
+        class="focus:ring-2 ring-sky-500"
+        type="number"
+        bind:value={settings.infermaticai.max_tokens}
+      />
     {/if}
     {#if settings.api_type === 'openai'}
       <div class="label">Custom URL</div>
@@ -199,7 +182,11 @@
         </select>
       </div>
       <div class="label">Max tokens</div>
-      <Input class="focus:ring-2 ring-sky-500" bind:value={settings.openai.max_tokens} />
+      <Input
+        class="focus:ring-2 ring-sky-500"
+        type="number"
+        bind:value={settings.openai.max_tokens}
+      />
     {/if}
     <div class="label">Image model folder</div>
     <div class="folder-select">
