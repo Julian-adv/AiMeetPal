@@ -1,5 +1,9 @@
+import httpx
+from fastapi.responses import StreamingResponse
 from chat_common import ChatMessage
 from prompt_openai import make_openai_prompt
+from settings import load_api_settings, load_preset
+from chat_common import ChatMessage, find_start_index
 
 async def chat_openai(message: ChatMessage):
     settings = load_api_settings()
@@ -12,7 +16,7 @@ async def chat_openai(message: ChatMessage):
             user = "Julien"
             start_index = find_start_index(message.system_token_count, message.entries, preset["openai_max_context"] - settings["max_tokens"], user)
             print(f"start_index: {start_index}")
-            prompt = make_openai_prompt(user, message.info.name, wiBefore, message.info.description, message.info.personality, message.info.scenario, wiAfter, persona, message.entries, start_index)
+            prompt = make_openai_prompt(user, message.info.name, wiBefore, message.info.description, message.info.personality, message.info.scenario, message.info.mes_example, wiAfter, persona, message.entries, start_index, preset)
             print(prompt)
             return
             payload = make_payload(prompt, settings, preset)

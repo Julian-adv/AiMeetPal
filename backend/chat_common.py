@@ -12,6 +12,7 @@ class CharInfo(BaseModel):
     description: str
     personality: str
     scenario: str
+    mes_example: str
 
 class ChatMessage(BaseModel):
     system_token_count: int

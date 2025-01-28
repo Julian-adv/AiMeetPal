@@ -1,9 +1,10 @@
 from fastapi import APIRouter
 from pydantic import BaseModel
 import httpx
-from settings import load_api_settings
+from settings import load_api_settings, load_settings
 from chat_common import ChatEntry, CharInfo
 from prompt import make_prompt, make_prompt_single
+import transformers
 
 router = APIRouter()
 
@@ -13,8 +14,7 @@ class TokenMessage(BaseModel):
     entry: ChatEntry
 
 
-@router.post("/api/count-tokens")
-async def count_tokens(message: TokenMessage):
+async def count_tokens_infermaticai(message: TokenMessage):
     try:
         settings = load_api_settings()
         wiBefore = ""
@@ -46,3 +46,28 @@ async def count_tokens(message: TokenMessage):
     except Exception as e:
         print(f"Error counting tokens: {e}")
         return {"success": False, "message": str(e)}
+
+
+async def count_tokens_deepseek(message: TokenMessage):
+    try:
+        chat_tokenizer_dir = './deepseek_v3_tokenizer/'
+        tokenizer = transformers.AutoTokenizer.from_pretrained(
+            chat_tokenizer_dir, trust_remote_code=True
+        )
+        result = tokenizer.encode(message.entry.content)
+        return {
+            "success": True,
+            "total_tokens": len(result)
+        }
+    except Exception as e:
+        print(f"Error counting tokens: {e}")
+        return {"success": False, "message": str(e)}
+
+
+@router.post("/api/count-tokens")
+async def count_tokens(message: TokenMessage):
+    settings = load_settings()
+    if settings["api_type"] == "infermaticai":
+        return await count_tokens_infermaticai(message)
+    elif settings["api_type"] == "openai":
+        return await count_tokens_deepseek(message)

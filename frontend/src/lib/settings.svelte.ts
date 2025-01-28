@@ -18,7 +18,7 @@ interface OpenAISettings {
 }
 
 interface Settings {
-  api_type: 'infermatic' | 'openai'
+  api_type: 'infermaticai' | 'openai'
   infermaticai: InfermaticAISettings
   openai: OpenAISettings
   checkpoints_folder: string
@@ -26,7 +26,7 @@ interface Settings {
 }
 
 export const settings: Settings = $state({
-  api_type: 'infermatic',
+  api_type: 'infermaticai',
   infermaticai: {
     api_key: 'your api key',
     preset: 'anthracite-org-magnum-v4-72b-FP8-Dynamic-preset.json',
@@ -71,7 +71,7 @@ export async function load_settings() {
   if (server_settings) {
     updateObject(settings, server_settings)
 
-    if (settings.api_type === 'infermatic') {
+    if (settings.api_type === 'infermaticai') {
       preset.max_length = server_settings.infermaticai.preset.max_length
     } else if (settings.api_type === 'openai') {
       preset.max_length = server_settings.openai.preset.openai_max_context

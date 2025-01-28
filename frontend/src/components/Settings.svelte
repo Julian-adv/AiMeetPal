@@ -131,11 +131,11 @@
     <div class="label">API type</div>
     <div>
       <select bind:value={settings.api_type}>
-        <option value="infermatic">Infermatic.ai</option>
+        <option value="infermaticai">Infermatic.ai</option>
         <option value="openai">OpenAI Compatible</option>
       </select>
     </div>
-    {#if settings.api_type === 'infermatic'}
+    {#if settings.api_type === 'infermaticai'}
       <div class="label">Infermatic.ai API key</div>
       <Input
         type="password"

@@ -1,7 +1,7 @@
 from fastapi import HTTPException, APIRouter
 from pydantic import BaseModel
 import httpx
-from settings import load_api_settings, load_preset
+from settings import load_api_settings_for, load_preset_for
 from payload import make_payload
 
 router = APIRouter()
@@ -15,11 +15,11 @@ class ImagePrompt(BaseModel):
 
 @router.post("/api/scene-to-prompt")
 def scene_to_prompt(scene: SceneContent):
-    settings = load_api_settings()
-    preset = load_preset()
+    settings = load_api_settings_for('infermaticai')
+    preset = load_preset_for('infermaticai')
     try:
         system_prompt = (
-            '<|im_start|>system\n' +
+            '<|pad|>system\n' +
             'You are an expert at updating scene descriptions to create images using the Stable Diffusion model.\n' +
             '\n' +
             'Your job is to maintain and update character appearances and environmental descriptions based on ongoing dialogue.\n' +

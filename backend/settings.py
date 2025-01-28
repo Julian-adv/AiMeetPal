@@ -21,23 +21,35 @@ def load_settings(reload=False):
 
 def load_api_settings():
     settings = load_settings()
-    if settings['api_type'] == 'infermatic':
+    if settings['api_type'] == 'infermaticai':
         return settings['infermaticai']
     elif settings['api_type'] == 'openai':
         return settings['openai']
 
+def load_api_settings_for(api: str) -> dict:
+    settings = load_settings()
+    return settings[api]
+
 def load_preset():
     settings = load_settings()
-    if settings['api_type'] == 'infermatic':
+    if settings['api_type'] == 'infermaticai':
         path = get_data_path(settings['infermaticai']['preset'])
     elif settings['api_type'] == 'openai':
         path = get_data_path(settings['openai']['preset'])
     with open(path, "r") as f:
         return json.load(f)
 
+def load_preset_for(api: str) -> dict:
+    if api == 'infermaticai':
+        path = get_data_path(settings['infermaticai']['preset'])
+    elif api == 'openai':
+        path = get_data_path(settings['openai']['preset'])
+    with open(path, "r") as f:
+        return json.load(f)
+
 def load_instruct():
     settings = load_settings()
-    if settings['api_type'] == 'infermatic':
+    if settings['api_type'] == 'infermaticai':
         path = get_data_path(settings['infermaticai']['instruct'])
         with open(path, "r") as f:
             return json.load(f)
@@ -45,7 +57,7 @@ def load_instruct():
 
 def load_context():
     settings = load_settings()
-    if settings['api_type'] == 'infermatic':
+    if settings['api_type'] == 'infermaticai':
         path = get_data_path(settings['infermaticai']['context'])
         with open(path, "r") as f:
             return json.load(f)

@@ -73,16 +73,18 @@
       chatEntries.splice(-1, 1)
     }
 
+    const payload = {
+      system_token_count: g_state.system_token_count,
+      info: g_state.selected_char?.info,
+      entries: chatEntries,
+    }
+    // console.log(payload)
     const response = await fetch('http://localhost:5000/api/chat', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({
-        system_token_count: g_state.system_token_count,
-        info: g_state.selected_char?.info,
-        entries: chatEntries,
-      }),
+      body: JSON.stringify(payload),
     })
 
     if (!response.ok) {
