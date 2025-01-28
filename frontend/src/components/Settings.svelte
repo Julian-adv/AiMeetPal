@@ -6,6 +6,7 @@
   import { get_dir_entries, get_checkpoints } from '../lib/files.svelte'
 
   let language_models: string[] = $state([])
+  let openai_models: string[] = $state([])
   let checkpoints: string[] = $state([])
   const modalExample = uiHelpers()
   let modalStatus = $state(false)
@@ -23,17 +24,36 @@
 
   async function get_language_models() {
     try {
-      const response = await fetch('https://api.totalgpt.ai/v1/models', {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${settings.infermaticai.api_key}`,
-        },
-      })
-      if (response.ok) {
-        const data = await response.json()
-        const models = data.data.map((model: any) => model.id)
-        return models.sort((a: string, b: string) => a.toLowerCase().localeCompare(b.toLowerCase()))
+      if (settings.api_type === 'infermaticai') {
+        const response = await fetch('https://api.totalgpt.ai/v1/models', {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${settings.infermaticai.api_key}`,
+          },
+        })
+        if (response.ok) {
+          const data = await response.json()
+          const models = data.data.map((model: any) => model.id)
+          return models.sort((a: string, b: string) =>
+            a.toLowerCase().localeCompare(b.toLowerCase())
+          )
+        }
+      } else if (settings.api_type === 'openai') {
+        const response = await fetch(`${settings.openai.custom_url}/models`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${settings.openai.api_key}`,
+          },
+        })
+        if (response.ok) {
+          const data = await response.json()
+          const models = data.data.map((model: any) => model.id)
+          return models.sort((a: string, b: string) =>
+            a.toLowerCase().localeCompare(b.toLowerCase())
+          )
+        }
       }
     } catch (error) {
       console.error('Error fetching model list:', error)
@@ -170,6 +190,14 @@
       />
       <div class="label">Preset</div>
       <Input class="focus:ring-2 ring-sky-500" bind:value={settings.openai.preset} />
+      <div class="label">Language model</div>
+      <div>
+        <select bind:value={settings.openai.model}>
+          {#each language_models as model}
+            <option value={model}>{model}</option>
+          {/each}
+        </select>
+      </div>
       <div class="label">Max tokens</div>
       <Input class="focus:ring-2 ring-sky-500" bind:value={settings.openai.max_tokens} />
     {/if}

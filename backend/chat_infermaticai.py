@@ -1,5 +1,6 @@
 import httpx
 import json
+from fastapi import HTTPException
 from fastapi.responses import StreamingResponse
 from settings import load_api_settings, load_preset
 from chat_common import ChatMessage, find_start_index

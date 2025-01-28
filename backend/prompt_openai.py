@@ -39,7 +39,7 @@ def make_openai_prompt(user, char, wiBefore, description, personality, scenario,
                 order["identifier"] == "jailbreak"):
                 role, content = find_prompt(prompts, order["identifier"], user, char)
                 append(messages, role, content, user, char)
-            elif order["identifier"] == "worldInfoBefore":
+            elif order["identifier"] == "worldInfoBefore" and wiBefore != "":
                 append(messages, "system", wiBefore, user, char)
             elif order["identifier"] == "personaDescription":
                 append(messages, "system", persona, user, char)
@@ -49,17 +49,19 @@ def make_openai_prompt(user, char, wiBefore, description, personality, scenario,
                 append(messages, "system", personality, user, char)
             elif order["identifier"] == "scenario":
                 append(messages, "system", scenario, user, char)
-            elif order["identifier"] == "worldInfoAfter":
+            elif order["identifier"] == "worldInfoAfter" and wiAfter != "":
                 append(messages, "system", wiAfter, user, char)
             elif order["identifier"] == "dialogueExamples":
                 append(messages, "system", mes_example, user, char)
+            elif order["identifier"] == "chatHistory":
+                append(messages, "system", "[Start a new Chat]", user, char)
+                for entry in entries[start_index:]:
+                    role = 'user' if entry.speaker == user else 'assistant'
+                    message = {
+                        'role': role,
+                        'content': entry.content
+                    }
+                    messages.append(message)
 
-    for entry in entries[start_index:]:
-        role = 'user' if entry.speaker == user else 'assistant'
-        message = {
-            'role': role,
-            'content': entry.content
-        }
-        messages.append(message)
     
     return messages

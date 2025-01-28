@@ -21,6 +21,24 @@ INFERMATICAI_KEYS = [
     'logprobs',
 ]
 
+OPENAI_KEYS = [
+    'model',
+    'prompt',
+    'stream',
+    'temperature',
+    'top_p',
+    'frequency_penalty',
+    'presence_penalty',
+    'stop',
+    'logit_bias',
+    'logprobs',
+    'max_tokens',
+    'best_of',
+    'seed',
+    'messages',
+    'max_completion_tokens',
+];
+
 def make_payload(prompt: str, settings: dict, preset: dict, stream: bool = True) -> dict:
     payload = {
         **preset,
@@ -31,5 +49,21 @@ def make_payload(prompt: str, settings: dict, preset: dict, stream: bool = True)
     }
     # Filter preset to only include keys in INFERMATICAI_KEYS
     filtered_preset = {k: v for k, v in payload.items() if k in INFERMATICAI_KEYS}
+    
+    return filtered_preset
+
+def make_openai_payload(messages: list, settings: dict, preset: dict, stream: bool = True) -> dict:
+    payload = {
+        **preset,
+        "messages": messages,
+        "model": settings["model"],
+        "max_tokens": settings["max_tokens"],
+        "max_completion_tokens": settings["max_tokens"],
+        "logit_bias": {},
+        "logprobs": False,
+        "stream": stream,
+    }
+    # Filter preset to only include keys in OPENAI_KEYS
+    filtered_preset = {k: v for k, v in payload.items() if k in OPENAI_KEYS}
     
     return filtered_preset

@@ -1,9 +1,12 @@
 import httpx
+import json
+from fastapi import HTTPException
 from fastapi.responses import StreamingResponse
 from chat_common import ChatMessage
 from prompt_openai import make_openai_prompt
 from settings import load_api_settings, load_preset
 from chat_common import ChatMessage, find_start_index
+from payload import make_openai_payload
 
 async def chat_openai(message: ChatMessage):
     settings = load_api_settings()
@@ -16,20 +19,20 @@ async def chat_openai(message: ChatMessage):
             user = "Julien"
             start_index = find_start_index(message.system_token_count, message.entries, preset["openai_max_context"] - settings["max_tokens"], user)
             print(f"start_index: {start_index}")
-            prompt = make_openai_prompt(user, message.info.name, wiBefore, message.info.description, message.info.personality, message.info.scenario, message.info.mes_example, wiAfter, persona, message.entries, start_index, preset)
-            print(prompt)
-            return
-            payload = make_payload(prompt, settings, preset)
+            messages = make_openai_prompt(user, message.info.name, wiBefore, message.info.description, message.info.personality, message.info.scenario, message.info.mes_example, wiAfter, persona, message.entries, start_index, preset)
+            payload = make_openai_payload(messages, settings, preset)
 
             async with client.stream(
                 "POST",
-                "https://api.totalgpt.ai/v1/completions",
-                json=payload,
+                f"{settings['custom_url']}/chat/completions",
                 headers={
                     "Authorization": f"Bearer {settings['api_key']}",
                     "Content-Type": "application/json"
-                }
+                },
+                json=payload,
+                timeout=60.0,
             ) as response:
+                print(f"response: {response}")
                 if response.status_code != 200:
                     raise HTTPException(status_code=response.status_code, detail="API request failed")
                 
@@ -43,7 +46,7 @@ async def chat_openai(message: ChatMessage):
                             break
                         try:
                             json_data = json.loads(data)
-                            if text := json_data.get("choices", [{}])[0].get("text"):
+                            if text := json_data.get("choices", [{}])[0].get("delta", {}).get("content"):
                                 yield f"data: {json.dumps({'text': text})}\n\n"
                         except json.JSONDecodeError:
                             continue
