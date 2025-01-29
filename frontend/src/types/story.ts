@@ -7,16 +7,21 @@ export enum StoryEntryState {
   NoSpinner = 'no_spinner',
 }
 
+export interface ImageEntry {
+  image: string | null
+  path: string
+  width: number
+  height: number
+  prompt: string
+}
+
 export interface StoryEntry {
   id: number
   speaker: string
   content: string
   state: StoryEntryState
-  image: string | null
-  image_path?: string
-  width?: number
-  height?: number
-  image_prompt?: string
+  images: ImageEntry[]
+  active_image?: number
   token_count?: number
 }
 

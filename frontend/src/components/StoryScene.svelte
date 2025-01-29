@@ -11,6 +11,7 @@
   import Handlebars from 'handlebars'
   import { TBoxLineDesign } from 'svelte-remix'
   import { onMount } from 'svelte'
+  import type { ImageEntry } from '../types/story'
 
   interface Prop {
     entry: StoryEntry
@@ -21,8 +22,12 @@
   }
 
   let { entry, regenerate_content, index, image_generated, disabled }: Prop = $props()
-  let width = $derived(entry.width ?? 832)
-  let height = $derived(entry.height ?? 1216)
+  let width = $derived(
+    entry.active_image !== undefined ? entry.images[entry.active_image].width : 832
+  )
+  let height = $derived(
+    entry.active_image !== undefined ? entry.images[entry.active_image].height : 1216
+  )
   let edit_mode = $state(false)
   let edit_textarea: HTMLTextAreaElement | null = $state(null)
   let rotationAngle = 0
@@ -52,7 +57,11 @@
 
   function get_prev_prompt(i: number) {
     if (i > 1) {
-      return g_state.story_entries[i - 2].image_prompt ?? ''
+      const active_image = g_state.story_entries[i - 2].active_image
+      if (active_image !== undefined) {
+        return g_state.story_entries[i - 2].images[active_image].prompt
+      }
+      return ''
     }
     if (g_state.selected_char?.info.description) {
       const template = Handlebars.compile(g_state.selected_char.info.description)
@@ -65,10 +74,15 @@
     const prev_prompt = get_prev_prompt(index)
     const { prompt, width, height } = await generate_prompt(entry.content, prev_prompt)
     entry.state = StoryEntryState.WaitImage
-    entry.width = width
-    entry.height = height
-    entry.image_prompt = prompt
-    entry.image = await generate_image(settings.checkpoint_name, prompt, width, height)
+    const image_entry: ImageEntry = {
+      width: width,
+      height: height,
+      prompt: prompt,
+      image: await generate_image(settings.checkpoint_name, prompt, width, height),
+      path: '',
+    }
+    entry.images = [...entry.images, image_entry]
+    entry.active_image = entry.images.length - 1
     entry.state = StoryEntryState.Image
     image_generated(entry)
   }
@@ -143,8 +157,8 @@
       {width}
       {height}
       image_state={entry.state}
-      image={entry.image}
-      image_prompt={entry.image_prompt}
+      image={entry.active_image !== undefined ? entry.images[entry.active_image].image : null}
+      image_prompt={entry.active_image !== undefined ? entry.images[entry.active_image].prompt : ''}
       scale={width > height ? 0.61 : 0.45}
       {disabled}
     />{/if}

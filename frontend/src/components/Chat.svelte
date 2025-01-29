@@ -204,14 +204,14 @@
           speaker: 'Julien',
           content: chatInputValue,
           state: StoryEntryState.NoImage,
-          image: null,
+          images: [],
         },
         {
           id: nextId++,
           speaker: g_state.selected_char?.info.name ?? 'AI',
           content: '',
           state: StoryEntryState.WaitContent,
-          image: null,
+          images: [],
         },
       ]
 
@@ -257,37 +257,13 @@
     nextId = Math.max(...g_state.story_entries.map((entry) => entry.id)) + 1
     // Load images for entries that have image_path
     for (const entry of g_state.story_entries) {
-      if (entry.image_path && !entry.image) {
-        entry.image = `http://localhost:5000/data/${entry.image_path}`
+      for (const image of entry.images) {
+        if (image.path && !image.image) {
+          image.image = `http://localhost:5000/data/${image.path}`
+        }
       }
     }
     await update_token_count()
-  }
-
-  async function load_session_image(
-    entry: StoryEntry,
-    character_name: string,
-    session_name: string
-  ) {
-    try {
-      const response = await fetch('http://localhost:5000/api/load-session-image', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          character_name,
-          session_name,
-          index: entry.id,
-        }),
-      })
-      const data = await response.json()
-      if (data.success) {
-        entry.image = data.image
-      }
-    } catch (e) {
-      console.error('Failed to load session image:', e)
-    }
   }
 
   async function start_chat() {
@@ -340,7 +316,7 @@
             char: g_state.selected_char.info.name,
           }),
           state: StoryEntryState.WaitPrompt,
-          image: null,
+          images: [],
         },
       ]
       g_state.story_entries[0].speaker = g_state.selected_char.info.name
@@ -382,25 +358,42 @@
       }
 
       // First save the image
-      const path = await save_session_image(entry.id.toString(), entry.image)
-      if (path) {
-        entry.image_path = path
+      if (entry.active_image !== undefined) {
+        const path = await save_session_image(
+          entry.id.toString(),
+          entry.images[entry.active_image].image
+        )
+        if (path) {
+          entry.images[entry.active_image].path = path
+        }
       }
 
       // Then save the session
+      let story_entries: StoryEntries = []
+      for (let i = 0; i < g_state.story_entries.length; i++) {
+        // Create a deep copy of the entry first
+        story_entries.push({ ...g_state.story_entries[i] })
+        // Then handle the images array separately
+        story_entries[i].images = g_state.story_entries[i].images.map((image_entry) => ({
+          ...image_entry,
+          image: null,
+        }))
+      }
       const payload = {
         session_name: session_name,
         system_token_count: g_state.system_token_count,
         selected_char: session_char,
-        story_entries: g_state.story_entries.map(({ image, ...entry }) => entry),
+        story_entries: story_entries,
       }
-      await fetch('http://localhost:5000/api/save-session', {
+      const response = await fetch('http://localhost:5000/api/save-session', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(payload),
       })
+      const data = await response.json()
+      console.log(data)
     } catch (e) {
       console.error('Failed to save session:', e)
     }

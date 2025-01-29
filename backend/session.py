@@ -12,21 +12,27 @@ class Character(BaseModel):
     image: str
     info: dict
 
+class ImageEntry(BaseModel):
+    image: str | None = None
+    path: str
+    width: int
+    height: int
+    prompt: str
+
 class StoryEntry(BaseModel):
     id: int
     speaker: str
     content: str
     state: str
-    image: str | None
-    width: int | None
-    height: int | None
-    image_prompt: str | None
+    images: list[ImageEntry]
+    active_image: int | None
+    token_count: int | None
 
 class Session(BaseModel):
     session_name: str
     system_token_count: int
     selected_char: Character
-    story_entries: list[dict]
+    story_entries: list[StoryEntry]
 
 class SaveSessionImage(BaseModel):
     character_name: str
