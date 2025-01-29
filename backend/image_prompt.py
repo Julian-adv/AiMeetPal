@@ -101,7 +101,7 @@ async def scene_to_prompt_openai(scene: SceneContent):
                     '2. Update dynamic elements (facial expressions, poses, clothing details) based on the current scene.\n'
                     '3. Maintain the continuity of the environment while updating with new details in the scene.\n'
                     '4. Use specific, clear, visually oriented English terminology.\n'
-                    '5. Format output as comma-separated words.\n'
+                    '5. Format output as comma-separated short phrases of no more than three words, e.g. long black hair, blue eyes, long legs, etc.\n'
                     '6. Choose appropriate camera angle for the image (e.g., wide shot, full body shot, close-up).\n'
                     '7. Select the appropriate image format from either landscape or portrait.\n'
                     '\n'

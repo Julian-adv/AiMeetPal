@@ -92,6 +92,7 @@ async def chat_openai(message: ChatMessage):
                             detail=f"Timeout after {max_retries} retries: {str(e)}",
                         )
                     print(f"Timeout occurred. Retrying... ({retry_count}/{max_retries})")
+                    yield f"data: {json.dumps({'reset': True})}\n\n"
                     continue
                 break
 

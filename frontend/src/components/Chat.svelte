@@ -47,18 +47,25 @@
     return text
   }
 
-  function received_text(text: string) {
-    if (g_state.story_entries[g_state.story_entries.length - 1].speaker === '') {
-      g_state.story_entries[g_state.story_entries.length - 1].content = formatResponse(
-        g_state.story_entries[g_state.story_entries.length - 1].content + text
-      )
+  function received_text(text: string, reset: boolean) {
+    if (reset) {
+      g_state.story_entries[g_state.story_entries.length - 1].content = ''
     } else {
-      g_state.story_entries[g_state.story_entries.length - 1].content =
-        g_state.story_entries[g_state.story_entries.length - 1].content + text
+      if (g_state.story_entries[g_state.story_entries.length - 1].speaker === '') {
+        g_state.story_entries[g_state.story_entries.length - 1].content = formatResponse(
+          g_state.story_entries[g_state.story_entries.length - 1].content + text
+        )
+      } else {
+        g_state.story_entries[g_state.story_entries.length - 1].content =
+          g_state.story_entries[g_state.story_entries.length - 1].content + text
+      }
     }
   }
 
-  async function send_chat(entries: StoryEntries, received: (text: string) => void) {
+  async function send_chat(
+    entries: StoryEntries,
+    received: (text: string, reset: boolean) => void
+  ) {
     const chatEntries = entries.map(({ id, speaker, content, token_count }) => ({
       id,
       speaker,
@@ -112,10 +119,13 @@
           try {
             const data = JSON.parse(line.slice(6))
             if (data.text) {
-              received(data.text)
+              received(data.text, false)
             }
             if (data.start_index !== undefined) {
               g_state.start_index = data.start_index
+            }
+            if (data.reset) {
+              received('', true)
             }
           } catch (e) {
             console.error('Failed to parse JSON:', e)
