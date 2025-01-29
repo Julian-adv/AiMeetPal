@@ -70,11 +70,9 @@ async def chat_openai(message: ChatMessage):
                                 if data == "[DONE]":
                                     # Send the start_index when stream ends
                                     yield f"data: {json.dumps({'start_index': start_index})}\n\n"
-                                    print(f"sent start_index: {start_index}")
                                     break
                                 try:
                                     json_data = json.loads(data)
-                                    print(f"json_data: {json_data}")
                                     choices = json_data.get("choices")
                                     if len(choices) == 0:
                                         continue
