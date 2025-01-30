@@ -2,7 +2,7 @@
   import CharacterList from './components/CharacterList.svelte'
   import Chat from './components/Chat.svelte'
   import EditChar from './components/EditChar.svelte'
-  import CompareImage from './components/CompareImage.svelte'
+  import Checkpoints from './components/Checkpoints.svelte'
   import Settings from './components/Settings.svelte'
   import Tabs from './components/Tabs.svelte'
   import {
@@ -18,7 +18,7 @@
     { label: 'Characters', icon: Users, value: 1, component: CharacterList },
     { label: 'Chat', icon: ChatBubbleLeftRight, value: 2, component: Chat },
     { label: 'Edit char', icon: UserPlus, value: 3, component: EditChar },
-    { label: 'Compare', icon: Squares2x2, value: 4, component: CompareImage },
+    { label: 'Checkpoints', icon: Squares2x2, value: 4, component: Checkpoints },
     { label: 'Settings', icon: WrenchScrewdriver, value: 5, component: Settings },
   ]
   let prompt = ''
