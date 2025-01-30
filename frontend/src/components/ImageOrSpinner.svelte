@@ -8,10 +8,12 @@
   interface Prop {
     entry: StoryEntry
     disabled?: boolean
-    regenerate_image: () => void
+    regenerate_image?: () => void
+    scale?: number
+    landscape?: boolean
   }
 
-  let { entry, disabled = false, regenerate_image }: Prop = $props()
+  let { entry, disabled = false, regenerate_image, scale = 1, landscape = false }: Prop = $props()
   let popover_id = `scene-image${get_id()}`
   const imageModal = uiHelpers()
   let modalStatus = $state(false)
@@ -22,8 +24,8 @@
 
   const default_image: ImageEntry = {
     image: null,
-    width: 832,
-    height: 1216,
+    width: landscape ? 1216 : 832,
+    height: landscape ? 832 : 1216,
     prompt: '',
     path: '',
   }
@@ -41,11 +43,12 @@
   let camera_class = $derived(
     entry.state === StoryEntryState.WaitPrompt ||
       entry.state === StoryEntryState.WaitContent ||
-      entry.state === StoryEntryState.WaitImage
+      entry.state === StoryEntryState.WaitImage ||
+      regenerate_image === undefined
       ? 'invisible'
       : 'visible'
   )
-  let scale = $derived(image.width > image.height ? 0.61 : 0.45)
+  let image_scale = $derived(image.width > image.height ? 0.61 * scale : 0.45 * scale)
   let show_buttons = $state(false)
 
   function go_previous() {
@@ -63,17 +66,13 @@
 
 <div
   id={popover_id}
+  role="figure"
   class={image.width > image.height ? 'scene-image-wide' : 'scene-image'}
-  style="--image-width: {image.width}px; --image-height: {image.height}px; --image-scale: {scale}"
+  style="--image-width: {image.width}px; --image-height: {image.height}px; --image-scale: {image_scale}"
+  onmouseenter={() => (show_buttons = true)}
+  onmouseleave={() => (show_buttons = false)}
 >
-  <button
-    type="button"
-    class="image-placeholder"
-    onclick={imageModal.toggle}
-    onmouseenter={() => (show_buttons = true)}
-    onmouseleave={() => (show_buttons = false)}
-    {disabled}
-  >
+  <button type="button" class="image-placeholder" onclick={imageModal.toggle} {disabled}>
     {#if entry.state === StoryEntryState.WaitPrompt || entry.state === StoryEntryState.WaitContent}
       <div class="spinner_square"></div>
     {:else if entry.state === StoryEntryState.WaitImage}
@@ -82,8 +81,8 @@
   </button>
   <div
     class="absolute left-1 bottom-1 right-1 flex justify-between z-10 cursor-pointer {show_buttons
-      ? 'visible'
-      : 'invisible'}"
+      ? ''
+      : 'hidden'}"
   >
     <Button
       color="light"
@@ -92,7 +91,7 @@
     >
     <Button
       color="light"
-      class="p-1 backdrop-blur bg-white/30 text-neutral-100 hover:bg-white/50 {camera_class}"
+      class="p-1 backdrop-blur bg-white/30 text-neutral-300 hover:bg-white/50 {camera_class}"
       onclick={regenerate_image}><Camera size="20" /></Button
     >
     <Button

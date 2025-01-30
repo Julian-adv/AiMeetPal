@@ -3,50 +3,45 @@
   import { get_checkpoints } from '../lib/files.svelte'
   import ImageOrSpinner from './ImageOrSpinner.svelte'
   import FlexibleTextarea from './FlexibleTextarea.svelte'
-  import { StoryEntryState } from '../types/story'
+  import { StoryEntryState, type StoryEntry } from '../types/story'
   import { image_size, generate_image } from '../lib/generate_image.svelte'
   import { Button } from 'svelte-5-ui-lib'
   import { load_settings } from '../lib/settings.svelte'
 
-  interface CheckpointImage {
-    state: StoryEntryState
-    image: string | null
-    width: number
-    height: number
-  }
-
   interface Checkpoint {
     name: string
-    portrait: CheckpointImage
-    landscape: CheckpointImage
+    portrait: StoryEntry
+    landscape: StoryEntry
   }
 
   let checkpoints: Checkpoint[] = $state([])
   let prompt = $state('')
   let stop = $state(false)
 
+  async function add_image(checkpoint_name: string, entry: StoryEntry, portrait: boolean) {
+    const { width, height } = image_size(portrait ? 'format: portrait' : 'format: landscape')
+    entry.state = StoryEntryState.WaitImage
+    let image_entry = {
+      image: await generate_image(checkpoint_name, prompt, width, height),
+      width: width,
+      height: height,
+      prompt: '',
+      path: '',
+    }
+    entry.images = [...entry.images, image_entry]
+    entry.active_image = entry.images.length - 1
+    entry.state = StoryEntryState.Image
+  }
+
   async function start_generate_image() {
     if (prompt.trim() === '') return
     stop = false
 
     for (let i = 0; i < checkpoints.length; i++) {
-      checkpoints[i].portrait.state = StoryEntryState.WaitImage
-      checkpoints[i].portrait.image = await generate_image(
-        checkpoints[i].name,
-        prompt + ', format: portrait',
-        checkpoints[i].portrait.width,
-        checkpoints[i].portrait.height
-      )
-      checkpoints[i].portrait.state = StoryEntryState.Image
+      add_image(checkpoints[i].name, checkpoints[i].portrait, true)
       if (stop) return
-      checkpoints[i].landscape.state = StoryEntryState.WaitImage
-      checkpoints[i].landscape.image = await generate_image(
-        checkpoints[i].name,
-        prompt,
-        checkpoints[i].landscape.width,
-        checkpoints[i].landscape.height
-      )
-      checkpoints[i].landscape.state = StoryEntryState.Image
+      add_image(checkpoints[i].name, checkpoints[i].landscape, false)
+      if (stop) return
     }
   }
 
@@ -57,15 +52,19 @@
         name: checkpoint,
         portrait: {
           state: StoryEntryState.NoSpinner,
-          image: null,
-          width: width,
-          height: height,
+          images: [],
+          id: 0,
+          speaker: '',
+          content: '',
+          active_image: undefined,
         },
         landscape: {
           state: StoryEntryState.NoSpinner,
-          image: null,
-          width: height,
-          height: width,
+          images: [],
+          id: 0,
+          speaker: '',
+          content: '',
+          active_image: undefined,
         },
       }
     })
@@ -79,7 +78,7 @@
 
 <h2>Compare</h2>
 <FlexibleTextarea bind:value={prompt} />
-<Button color="light" onclick={start_generate_image}>Generate</Button>
+<Button color="light" onclick={start_generate_image}>Generate all</Button>
 <Button color="light" onclick={() => (stop = true)}>Stop</Button>
 <Button color="light" onclick={refresh_checkpoints}>Refresh</Button>
 <div class="mt-5 grid grid-cols-[1fr_2fr] gap-1 justify-items-center">
@@ -90,20 +89,17 @@
     </div>
     <div>
       <ImageOrSpinner
-        image={checkpoint.portrait.image}
-        image_state={checkpoint.portrait.state}
-        width={checkpoint.portrait.width}
-        height={checkpoint.portrait.height}
-        scale={0.4}
+        entry={checkpoint.portrait}
+        scale={0.7}
+        regenerate_image={() => add_image(checkpoint.name, checkpoint.portrait, true)}
       />
     </div>
     <div>
       <ImageOrSpinner
-        image={checkpoint.landscape.image}
-        image_state={checkpoint.landscape.state}
-        width={checkpoint.landscape.width}
-        height={checkpoint.landscape.height}
-        scale={0.4}
+        entry={checkpoint.landscape}
+        scale={0.7}
+        landscape={true}
+        regenerate_image={() => add_image(checkpoint.name, checkpoint.landscape, false)}
       />
     </div>
   {/each}
