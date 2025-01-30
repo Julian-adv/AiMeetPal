@@ -87,7 +87,6 @@
       height: height,
       prompt: prompt,
       image: await generate_image(settings.checkpoint_name, prompt, width, height),
-      path: '',
     }
     entry.images = [...entry.images, image_entry]
     entry.active_image = entry.images.length - 1

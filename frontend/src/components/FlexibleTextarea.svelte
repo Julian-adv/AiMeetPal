@@ -16,6 +16,11 @@
     onkeydown = () => {},
   }: Props = $props()
 
+  $effect(() => {
+    value
+    adjust_height()
+  })
+
   function adjust_height() {
     if (textarea) {
       textarea.style.height = 'auto'

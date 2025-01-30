@@ -255,14 +255,6 @@
     g_state.story_entries = session.story_entries
     session_name = session.session_name
     nextId = Math.max(...g_state.story_entries.map((entry) => entry.id)) + 1
-    // Load images for entries that have image_path
-    for (const entry of g_state.story_entries) {
-      for (const image of entry.images) {
-        if (image.path && !image.image) {
-          image.image = `http://localhost:5000/data/${image.path}`
-        }
-      }
-    }
     await update_token_count()
   }
 
@@ -364,7 +356,7 @@
           entry.images[entry.active_image].image
         )
         if (path) {
-          entry.images[entry.active_image].path = path
+          entry.images[entry.active_image].image = `http://localhost:5000/data/${path}`
         }
       }
 

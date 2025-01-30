@@ -35,10 +35,7 @@
     const char_name = g_state.selected_char.file_name.replace('.card', '')
     session = await get_session_json(char_name, session_name)
     if (!session) return
-    entries = session.story_entries.slice(-3).map((entry: StoryEntry) => ({
-      ...entry,
-      image: entry.image_path ? `http://localhost:5000/data/${entry.image_path}` : null,
-    }))
+    entries = session.story_entries.slice(-3)
     selected = session_name
     more_entries = session.story_entries.length > 3
   }

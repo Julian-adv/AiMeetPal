@@ -17,6 +17,14 @@ class Entries(BaseModel):
     entries: List[Entry]
     current_directory: str
 
+class SaveJson(BaseModel):
+    path: str
+    json_data: dict
+
+class SaveImage(BaseModel):
+    path: str
+    image: str  # base64 encoded image data
+
 @router.post("/api/files")
 async def get_files(cur_dir: CurrentDirectory):
     print(f"Current directory: {cur_dir.path}")
@@ -49,5 +57,56 @@ async def get_files(cur_dir: CurrentDirectory):
             entries=entries,
             current_directory=path
         )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.post("/api/save-json")
+async def save_json(data: SaveJson):
+    # Ensure the path is under /data directory
+    base_path = os.path.normpath(os.path.join(os.path.dirname(__file__), "..", "data"))
+    full_path = os.path.normpath(os.path.join(base_path, data.path.lstrip("/")))
+    
+    # Security check - ensure the path is under /data directory
+    if not os.path.commonpath([base_path]) == os.path.commonpath([base_path, full_path]):
+        raise HTTPException(status_code=400, detail="Invalid path - must be under /data directory")
+    
+    try:
+        # Create directory if it doesn't exist
+        os.makedirs(os.path.dirname(full_path), exist_ok=True)
+        
+        # Save JSON data
+        import json
+        with open(full_path, 'w', encoding='utf-8') as f:
+            json.dump(data.json_data, f, ensure_ascii=False, indent=2)
+            
+        return {"status": "success", "path": data.path}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@router.post("/api/save-image")
+async def save_image(data: SaveImage):
+    # Ensure the path is under /data directory
+    base_path = os.path.normpath(os.path.join(os.path.dirname(__file__), "..", "data"))
+    full_path = os.path.normpath(os.path.join(base_path, data.path.lstrip("/")))
+    
+    # Security check - ensure the path is under /data directory
+    if not os.path.commonpath([base_path]) == os.path.commonpath([base_path, full_path]):
+        raise HTTPException(status_code=400, detail="Invalid path - must be under /data directory")
+    
+    try:
+        # Create directory if it doesn't exist
+        os.makedirs(os.path.dirname(full_path), exist_ok=True)
+        
+        # Decode base64 image and save
+        import base64
+        # Remove data URL prefix if present (e.g., "data:image/png;base64,")
+        if ',' in data.image:
+            data.image = data.image.split(',', 1)[1]
+        
+        image_data = base64.b64decode(data.image)
+        with open(full_path, 'wb') as f:
+            f.write(image_data)
+            
+        return {"status": "success", "path": data.path}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

@@ -1,9 +1,14 @@
 <script lang="ts">
   import { onMount } from 'svelte'
-  import { get_checkpoints } from '../lib/files.svelte'
+  import {
+    get_checkpoints,
+    save_json,
+    load_json,
+    save_image_story_entry,
+  } from '../lib/files.svelte'
   import ImageOrSpinner from './ImageOrSpinner.svelte'
   import FlexibleTextarea from './FlexibleTextarea.svelte'
-  import { StoryEntryState, type StoryEntry } from '../types/story'
+  import { StoryEntryState, type ImageEntry, type StoryEntry } from '../types/story'
   import { image_size, generate_image } from '../lib/generate_image.svelte'
   import { Button } from 'svelte-5-ui-lib'
   import { load_settings } from '../lib/settings.svelte'
@@ -21,16 +26,35 @@
   async function add_image(checkpoint_name: string, entry: StoryEntry, portrait: boolean) {
     const { width, height } = image_size(portrait ? 'format: portrait' : 'format: landscape')
     entry.state = StoryEntryState.WaitImage
-    let image_entry = {
+    let image_entry: ImageEntry = {
       image: await generate_image(checkpoint_name, prompt, width, height),
       width: width,
       height: height,
       prompt: '',
-      path: '',
     }
     entry.images = [...entry.images, image_entry]
     entry.active_image = entry.images.length - 1
     entry.state = StoryEntryState.Image
+    await save_compare()
+  }
+
+  async function save_compare() {
+    for (let i = 0; i < checkpoints.length; i++) {
+      await save_image_story_entry(
+        'compare',
+        checkpoints[i].name.substring(0, checkpoints[i].name.lastIndexOf('.')) + '_p',
+        checkpoints[i].portrait
+      )
+      await save_image_story_entry(
+        'compare',
+        checkpoints[i].name.substring(0, checkpoints[i].name.lastIndexOf('.')) + '_l',
+        checkpoints[i].landscape
+      )
+    }
+    await save_json('compare/compare.json', {
+      prompt: prompt,
+      checkpoints: checkpoints,
+    })
   }
 
   async function start_generate_image() {
@@ -38,41 +62,75 @@
     stop = false
 
     for (let i = 0; i < checkpoints.length; i++) {
-      add_image(checkpoints[i].name, checkpoints[i].portrait, true)
+      await add_image(checkpoints[i].name, checkpoints[i].portrait, true)
       if (stop) return
-      add_image(checkpoints[i].name, checkpoints[i].landscape, false)
+      await add_image(checkpoints[i].name, checkpoints[i].landscape, false)
       if (stop) return
     }
   }
 
   async function refresh_checkpoints() {
-    checkpoints = (await get_checkpoints()).map((checkpoint: string) => {
-      const { width, height } = image_size('format: portrait')
-      return {
-        name: checkpoint,
-        portrait: {
-          state: StoryEntryState.NoSpinner,
-          images: [],
-          id: 0,
-          speaker: '',
-          content: '',
-          active_image: undefined,
-        },
-        landscape: {
-          state: StoryEntryState.NoSpinner,
-          images: [],
-          id: 0,
-          speaker: '',
-          content: '',
-          active_image: undefined,
-        },
+    const newCheckpoints = await get_checkpoints()
+
+    // Add only new checkpoints that don't exist in current checkpoints array
+    for (const checkpoint of newCheckpoints) {
+      if (!checkpoints.some((c) => c.name === checkpoint)) {
+        checkpoints = [
+          ...checkpoints,
+          {
+            name: checkpoint,
+            portrait: {
+              state: StoryEntryState.NoSpinner,
+              images: [],
+              id: 0,
+              speaker: '',
+              content: '',
+              active_image: undefined,
+            },
+            landscape: {
+              state: StoryEntryState.NoSpinner,
+              images: [],
+              id: 0,
+              speaker: '',
+              content: '',
+              active_image: undefined,
+            },
+          },
+        ]
       }
-    })
+    }
+  }
+
+  async function load_compare() {
+    const data = await load_json('compare/compare.json')
+    if (data && data.prompt) {
+      prompt = data.prompt
+
+      // Restore saved checkpoint data
+      if (data.checkpoints) {
+        for (const savedCheckpoint of data.checkpoints) {
+          // Find matching checkpoint in current checkpoints array
+          const checkpoint = checkpoints.find((c) => c.name === savedCheckpoint.name)
+          if (checkpoint) {
+            // Restore portrait and landscape data
+            checkpoint.portrait = {
+              ...checkpoint.portrait,
+              ...savedCheckpoint.portrait,
+            }
+            checkpoint.landscape = {
+              ...checkpoint.landscape,
+              ...savedCheckpoint.landscape,
+            }
+          }
+        }
+      }
+    }
   }
 
   onMount(async () => {
     await load_settings()
     await refresh_checkpoints()
+    await load_compare()
   })
 </script>
 
@@ -89,14 +147,14 @@
     </div>
     <div>
       <ImageOrSpinner
-        entry={checkpoint.portrait}
+        bind:entry={checkpoint.portrait}
         scale={0.7}
         regenerate_image={() => add_image(checkpoint.name, checkpoint.portrait, true)}
       />
     </div>
     <div>
       <ImageOrSpinner
-        entry={checkpoint.landscape}
+        bind:entry={checkpoint.landscape}
         scale={0.7}
         landscape={true}
         regenerate_image={() => add_image(checkpoint.name, checkpoint.landscape, false)}

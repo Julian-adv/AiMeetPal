@@ -13,7 +13,13 @@
     landscape?: boolean
   }
 
-  let { entry, disabled = false, regenerate_image, scale = 1, landscape = false }: Prop = $props()
+  let {
+    entry = $bindable(),
+    disabled = false,
+    regenerate_image,
+    scale = 1,
+    landscape = false,
+  }: Prop = $props()
   let popover_id = `scene-image${get_id()}`
   const imageModal = uiHelpers()
   let modalStatus = $state(false)
@@ -27,7 +33,6 @@
     width: landscape ? 1216 : 832,
     height: landscape ? 832 : 1216,
     prompt: '',
-    path: '',
   }
   let image = $derived(
     entry.active_image !== undefined ? entry.images[entry.active_image] : default_image

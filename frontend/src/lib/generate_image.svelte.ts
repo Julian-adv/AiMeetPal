@@ -34,7 +34,6 @@ async function generate_image(
   width: number,
   height: number
 ) {
-  const prefix = 'score_9, score_8_up, score_7_up, score_6_up'
   const response = await fetch('http://localhost:5000/api/generate-image', {
     method: 'POST',
     headers: {
@@ -42,7 +41,7 @@ async function generate_image(
     },
     body: JSON.stringify({
       checkpoint_name: checkpoint_name,
-      prompt: `${prefix}, ${prompt}`,
+      prompt: prompt,
       guidance_scale: 4.5,
       width: width * 1,
       height: height * 1,

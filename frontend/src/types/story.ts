@@ -9,7 +9,6 @@ export enum StoryEntryState {
 
 export interface ImageEntry {
   image: string | null
-  path: string
   width: number
   height: number
   prompt: string
