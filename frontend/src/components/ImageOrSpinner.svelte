@@ -1,26 +1,17 @@
 <script lang="ts">
   import { get_id } from '../lib/util'
-  import { StoryEntryState } from '../types/story'
+  import { StoryEntryState, type ImageEntry, type StoryEntry } from '../types/story'
   import { Popover, Modal, uiHelpers } from 'svelte-5-ui-lib'
+  import { Button } from 'svelte-5-ui-lib'
+  import { ArrowLeft, ArrowRight, Camera } from 'svelte-heros-v2'
 
   interface Prop {
-    width: number
-    height: number
-    image_state: StoryEntryState
-    image: string | null
-    image_prompt?: string
-    scale?: number
+    entry: StoryEntry
     disabled?: boolean
+    regenerate_image: () => void
   }
-  let {
-    width,
-    height,
-    image_state,
-    image,
-    image_prompt,
-    scale = 0.45,
-    disabled = false,
-  }: Prop = $props()
+
+  let { entry, disabled = false, regenerate_image }: Prop = $props()
   let popover_id = `scene-image${get_id()}`
   const imageModal = uiHelpers()
   let modalStatus = $state(false)
@@ -28,32 +19,100 @@
   $effect(() => {
     modalStatus = imageModal.isOpen
   })
+
+  const default_image: ImageEntry = {
+    image: null,
+    width: 832,
+    height: 1216,
+    prompt: '',
+    path: '',
+  }
+  let image = $derived(
+    entry.active_image !== undefined ? entry.images[entry.active_image] : default_image
+  )
+  let prev_class = $derived(
+    entry.active_image !== undefined && entry.active_image > 0 ? 'visible' : 'invisible'
+  )
+  let next_class = $derived(
+    entry.active_image !== undefined && entry.active_image < entry.images.length - 1
+      ? 'visible'
+      : 'invisible'
+  )
+  let camera_class = $derived(
+    entry.state === StoryEntryState.WaitPrompt ||
+      entry.state === StoryEntryState.WaitContent ||
+      entry.state === StoryEntryState.WaitImage
+      ? 'invisible'
+      : 'visible'
+  )
+  let scale = $derived(image.width > image.height ? 0.61 : 0.45)
+  let show_buttons = $state(false)
+
+  function go_previous() {
+    if (entry.active_image !== undefined && entry.active_image > 0) {
+      entry.active_image = entry.active_image - 1
+    }
+  }
+
+  function go_next() {
+    if (entry.active_image !== undefined && entry.active_image < entry.images.length - 1) {
+      entry.active_image = entry.active_image + 1
+    }
+  }
 </script>
 
 <div
   id={popover_id}
-  class={width > height ? 'scene-image-wide' : 'scene-image'}
-  style="--image-width: {width}px; --image-height: {height}px; --image-scale: {scale}"
+  class={image.width > image.height ? 'scene-image-wide' : 'scene-image'}
+  style="--image-width: {image.width}px; --image-height: {image.height}px; --image-scale: {scale}"
 >
-  <button type="button" class="image-placeholder" onclick={imageModal.toggle} {disabled}>
-    {#if image_state === StoryEntryState.WaitPrompt || image_state === StoryEntryState.WaitContent}
+  <button
+    type="button"
+    class="image-placeholder"
+    onclick={imageModal.toggle}
+    onmouseenter={() => (show_buttons = true)}
+    onmouseleave={() => (show_buttons = false)}
+    {disabled}
+  >
+    {#if entry.state === StoryEntryState.WaitPrompt || entry.state === StoryEntryState.WaitContent}
       <div class="spinner_square"></div>
-    {:else if image_state === StoryEntryState.WaitImage}
+    {:else if entry.state === StoryEntryState.WaitImage}
       <div class="spinner_circle"></div>
     {/if}
   </button>
-  {#if image}
-    <img src={image} alt="Scene visualization" />
+  <div
+    class="absolute left-1 bottom-1 right-1 flex justify-between z-10 cursor-pointer {show_buttons
+      ? 'visible'
+      : 'invisible'}"
+  >
+    <Button
+      color="light"
+      class="p-1 backdrop-blur bg-white/30 text-neutral-100 hover:bg-white/50 {prev_class}"
+      onclick={go_previous}><ArrowLeft size="20" /></Button
+    >
+    <Button
+      color="light"
+      class="p-1 backdrop-blur bg-white/30 text-neutral-100 hover:bg-white/50 {camera_class}"
+      onclick={regenerate_image}><Camera size="20" /></Button
+    >
+    <Button
+      color="light"
+      class="p-1 backdrop-blur bg-white/30 text-neutral-100 hover:bg-white/50 {next_class}"
+      onclick={go_next}><ArrowRight size="20" /></Button
+    >
+  </div>
+  {#if image.image}
+    <img src={image.image} alt="Scene visualization" />
   {/if}
 </div>
-{#if image_prompt}
+{#if image.prompt}
   <Popover class="text-sm p-2 w-[50%] z-20" triggeredBy="#{popover_id}" position="bottom"
-    >{image_prompt}</Popover
+    >{image.prompt}</Popover
   >
 {/if}
 <Modal size="lg" {modalStatus} {closeModal}>
   <div class="flex flex-col items-center justify-center">
-    <img src={image} alt="Scene visualization" />
+    <img src={image.image} alt="Scene visualization" />
   </div>
 </Modal>
 
@@ -100,7 +159,7 @@
     height: 100%;
     display: flex;
     padding: 1rem;
-    justify-content: end;
+    justify-content: center;
     align-items: end;
     z-index: 1;
     background: transparent;

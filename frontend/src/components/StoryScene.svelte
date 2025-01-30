@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { StoryEntry } from '../types/story'
-  import { Button, Popover } from 'svelte-5-ui-lib'
+  import { Button, Popover, Toast } from 'svelte-5-ui-lib'
   import { PencilSquare, ArrowPath, Camera } from 'svelte-heros-v2'
   import { generate_image, generate_prompt } from '../lib/generate_image.svelte'
   import { highlightQuotes } from '../lib/util'
@@ -22,15 +22,19 @@
   }
 
   let { entry, regenerate_content, index, image_generated, disabled }: Prop = $props()
-  let width = $derived(
-    entry.active_image !== undefined ? entry.images[entry.active_image].width : 832
-  )
-  let height = $derived(
-    entry.active_image !== undefined ? entry.images[entry.active_image].height : 1216
-  )
   let edit_mode = $state(false)
   let edit_textarea: HTMLTextAreaElement | null = $state(null)
   let rotationAngle = 0
+  let show_toast_flag = $state(false)
+  let toast_message = $state('')
+
+  function show_toast(message: string) {
+    toast_message = message
+    show_toast_flag = true
+    setTimeout(() => {
+      show_toast_flag = false
+    }, 5000)
+  }
 
   function adjust_height() {
     if (edit_textarea) {
@@ -72,7 +76,11 @@
 
   async function generate_initial_image() {
     const prev_prompt = get_prev_prompt(index)
-    const { prompt, width, height } = await generate_prompt(entry.content, prev_prompt)
+    const { prompt, width, height, error } = await generate_prompt(entry.content, prev_prompt)
+    if (error) {
+      show_toast(error)
+      return
+    }
     entry.state = StoryEntryState.WaitImage
     const image_entry: ImageEntry = {
       width: width,
@@ -93,7 +101,7 @@
     }
   })
 
-  async function regenerate_image() {
+  function regenerate_image() {
     entry.state = StoryEntryState.WaitPrompt
   }
 
@@ -153,15 +161,12 @@
 
 <div class="story-scene">
   {#if entry.state !== StoryEntryState.NoImage}
-    <ImageOrSpinner
-      {width}
-      {height}
-      image_state={entry.state}
-      image={entry.active_image !== undefined ? entry.images[entry.active_image].image : null}
-      image_prompt={entry.active_image !== undefined ? entry.images[entry.active_image].prompt : ''}
-      scale={width > height ? 0.61 : 0.45}
-      {disabled}
-    />{/if}
+    <ImageOrSpinner {entry} {disabled} {regenerate_image} />{/if}
+  <Toast
+    bind:toastStatus={show_toast_flag}
+    dismissable={false}
+    baseClass="absolute bottom-10 right-10 bg-red-200 text-red-700">{toast_message}</Toast
+  >
   {#if entry.speaker}
     <span class="speaker">{entry.speaker}:</span>
   {/if}

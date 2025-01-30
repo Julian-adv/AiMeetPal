@@ -6,8 +6,11 @@ async function scene_to_prompt(text: string, prev_image_prompt: string) {
     },
     body: JSON.stringify({ content: text, prev_image_prompt: prev_image_prompt }),
   })
+  if (!response.ok) {
+    return { prompt: '', error: response.toString() }
+  }
   const data = await response.json()
-  return data.prompt
+  return { prompt: data.prompt, error: null }
 }
 
 export function image_size(prompt: string) {
@@ -20,12 +23,9 @@ export function image_size(prompt: string) {
 }
 
 async function generate_prompt(content: string, prev_prompt: string) {
-  let prompt = await scene_to_prompt(content, prev_prompt)
-  if (!prompt) {
-    prompt = content
-  }
+  let { prompt, error } = await scene_to_prompt(content, prev_prompt)
   const { width, height } = image_size(prompt)
-  return { prompt, width, height }
+  return { prompt, width, height, error }
 }
 
 async function generate_image(

@@ -25,8 +25,8 @@ class StoryEntry(BaseModel):
     content: str
     state: str
     images: list[ImageEntry]
-    active_image: int | None
-    token_count: int | None
+    active_image: int | None = None
+    token_count: int | None = None
 
 class Session(BaseModel):
     session_name: str

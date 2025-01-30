@@ -360,7 +360,7 @@
       // First save the image
       if (entry.active_image !== undefined) {
         const path = await save_session_image(
-          entry.id.toString(),
+          `${entry.id}-${entry.active_image}`,
           entry.images[entry.active_image].image
         )
         if (path) {

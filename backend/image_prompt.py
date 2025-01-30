@@ -124,7 +124,7 @@ async def scene_to_prompt_openai(scene: SceneContent):
             }
         ]
 
-        payload = make_openai_payload(messages, settings, preset, stream=False)
+        payload = make_openai_payload(messages, settings, preset, stream=True)
         print("payload:", payload)
 
         result_str = ""
@@ -157,7 +157,6 @@ async def scene_to_prompt_openai(scene: SceneContent):
                         if len(choices) > 0:
                             text = choices[0]["delta"]["content"]
                             result_str += text
-                            print(f"{text}", end='')
 
         # Remove <think> tags from result_str
         result_str = re.sub(r'<think>.*?</think>', '', result_str, flags=re.DOTALL)
