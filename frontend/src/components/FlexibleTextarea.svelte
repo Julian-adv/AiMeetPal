@@ -2,6 +2,7 @@
   import { onMount } from 'svelte'
 
   interface Props {
+    id?: string
     value?: string
     class?: string
     textarea?: HTMLTextAreaElement
@@ -10,6 +11,7 @@
   }
 
   let {
+    id,
     value = $bindable(),
     class: className = '',
     textarea = $bindable(),
@@ -34,6 +36,7 @@
 </script>
 
 <textarea
+  {id}
   bind:this={textarea}
   bind:value
   rows={1}
