@@ -10,10 +10,9 @@
   import FlexibleTextarea from './FlexibleTextarea.svelte'
   import { StoryEntryState, type ImageEntry, type StoryEntry } from '../types/story'
   import { image_size, generate_image } from '../lib/generate_image.svelte'
-  import { Button, Dropdown, DropdownLi, DropdownUl, Label, uiHelpers } from 'svelte-5-ui-lib'
+  import { Button, Label } from 'svelte-5-ui-lib'
   import { load_settings } from '../lib/settings.svelte'
-  import { ChevronDown } from 'svelte-heros-v2'
-  import { sineIn } from 'svelte/easing'
+  import DropdownButton from './DropdownButton.svelte'
 
   interface Checkpoint {
     name: string
@@ -25,16 +24,11 @@
   let prefix = $state('')
   let prompt = $state('')
   let stop = $state(false)
-  let prefix_dropdown = uiHelpers()
-  let prefix_dropdown_status = $state(false)
-  let prefix_dropdown_close = prefix_dropdown.close
-  $effect(() => {
-    prefix_dropdown_status = prefix_dropdown.isOpen
-  })
   let prefix_dropdown_options = $state([
     'score_9, score_8_up, score_7_up, score_6_up',
     'masterpiece, 8k, hd',
   ])
+  let prompt_dropdown_options = $state(['1girl'])
 
   async function add_image(checkpoint_name: string, entry: StoryEntry, portrait: boolean) {
     const { width, height } = image_size(portrait ? 'format: portrait' : 'format: landscape')
@@ -65,16 +59,23 @@
       )
     }
 
-    let index = prefix_dropdown_options.indexOf(prefix)
-    if (index === -1) {
+    let prefix_index = prefix_dropdown_options.indexOf(prefix)
+    if (prefix_index === -1) {
       prefix_dropdown_options = [...prefix_dropdown_options, prefix]
-      index = prefix_dropdown_options.length - 1
+      prefix_index = prefix_dropdown_options.length - 1
+    }
+
+    let prompt_index = prompt_dropdown_options.indexOf(prompt)
+    if (prompt_index === -1) {
+      prompt_dropdown_options = [...prompt_dropdown_options, prompt]
+      prompt_index = prompt_dropdown_options.length - 1
     }
 
     await save_json('compare/compare.json', {
       prefixes: prefix_dropdown_options,
-      selected_prefix: index,
-      prompt: prompt,
+      selected_prefix: prefix_index,
+      prompts: prompt_dropdown_options,
+      selected_prompt: prompt_index,
       checkpoints: checkpoints,
     })
   }
@@ -125,8 +126,7 @@
 
   async function load_compare() {
     const data = await load_json('compare/compare.json')
-    if (data && data.prompt) {
-      prompt = data.prompt
+    if (data) {
       if (data.prefixes && data.prefixes.length > 0) {
         prefix_dropdown_options = data.prefixes
         if (
@@ -135,6 +135,16 @@
           data.selected_prefix < data.prefixes.length
         ) {
           prefix = data.prefixes[data.selected_prefix]
+        }
+      }
+      if (data.prompts && data.prompts.length > 0) {
+        prompt_dropdown_options = data.prompts
+        if (
+          data.selected_prompt !== undefined &&
+          data.selected_prompt >= 0 &&
+          data.selected_prompt < data.prompts.length
+        ) {
+          prompt = data.prompts[data.selected_prompt]
         }
       }
 
@@ -159,13 +169,6 @@
     }
   }
 
-  function select_prefix(option: string) {
-    return () => {
-      prefix = option
-      prefix_dropdown_close()
-    }
-  }
-
   onMount(async () => {
     await load_settings()
     await refresh_checkpoints()
@@ -176,33 +179,16 @@
 <h2>Checkpoints</h2>
 <form class="flex flex-col gap-1 items-start">
   <Label for="prefix">Prefix</Label>
-  <div class="flex gap-2 w-full p-2 relative items-start">
+  <div class="flex gap-2 w-full px-2 relative items-start">
     <FlexibleTextarea id="prefix" class="flex-grow" bind:value={prefix} />
-    <Button color="light" class="p-1 flex-none" onclick={prefix_dropdown.toggle}>
-      <ChevronDown size="20" />
-    </Button>
-    <Dropdown
-      dropdownStatus={prefix_dropdown_status}
-      closeDropdown={prefix_dropdown_close}
-      params={{ y: 0, duration: 200, easing: sineIn }}
-      class="absolute right-1 top-9 w-96 text-left rounded border border-neutral-300"
-    >
-      <DropdownUl>
-        {#each prefix_dropdown_options as option}
-          <DropdownLi
-            ><Button
-              color="light"
-              class="px-2 py-1 w-full border-0 rounded-none justify-start truncate focus:ring-0"
-              onclick={select_prefix(option)}>{option}</Button
-            ></DropdownLi
-          >
-        {/each}
-      </DropdownUl>
-    </Dropdown>
+    <DropdownButton bind:value={prefix} options={prefix_dropdown_options} />
   </div>
-  <Label for="prompt">Prompt</Label>
-  <FlexibleTextarea id="prompt" bind:value={prompt} />
-  <div class="flex flex-row gap-1">
+  <Label for="prompt" class="mt-2">Prompt</Label>
+  <div class="flex gap-2 w-full px-2 relative items-start">
+    <FlexibleTextarea id="prompt" bind:value={prompt} />
+    <DropdownButton bind:value={prompt} options={prompt_dropdown_options} />
+  </div>
+  <div class="flex flex-row gap-1 p-2">
     <Button color="primary" onclick={start_generate_image}>Generate all</Button>
     <Button color="light" onclick={() => (stop = true)}>Stop</Button>
     <Button color="light" onclick={refresh_checkpoints}>Refresh</Button>
