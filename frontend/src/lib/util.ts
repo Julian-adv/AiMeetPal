@@ -1,4 +1,5 @@
 import { marked } from 'marked'
+import { settings } from './settings.svelte'
 
 export function highlightQuotes(content: string) {
   let markedContent = marked(content, { async: false })
@@ -11,4 +12,8 @@ let simple_id = 0
 
 export function get_id() {
   return simple_id++
+}
+
+export function get_prompt_with_prefix(prompt: string) {
+  return `${settings.prefix},${prompt}`
 }

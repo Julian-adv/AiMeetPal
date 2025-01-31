@@ -1,12 +1,11 @@
 <script lang="ts">
-  import { settings, load_settings } from '../lib/settings.svelte'
+  import { settings, load_settings, save_settings } from '../lib/settings.svelte'
   import { onMount } from 'svelte'
   import { Modal, Button, Input, uiHelpers, Breadcrumb, BreadcrumbItem } from 'svelte-5-ui-lib'
   import type { Entry, DirEntries } from '../types/file'
   import { get_dir_entries, get_checkpoints } from '../lib/files.svelte'
 
   let language_models: string[] = $state([])
-  let openai_models: string[] = $state([])
   let checkpoints: string[] = $state([])
   const modalExample = uiHelpers()
   let modalStatus = $state(false)
@@ -70,24 +69,6 @@
       new_path = new_path.replace(/\/\//g, '/')
       dir_entries = await get_dir_entries(new_path + '/')
       path_entries = dir_to_path_entries(new_path)
-    }
-  }
-
-  async function save_server_settings(settings: any) {
-    try {
-      const response = await fetch('http://localhost:5000/api/save_settings', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(settings),
-      })
-      if (response.ok) {
-        return await response.json()
-      }
-    } catch (error) {
-      console.error('Error saving settings:', error)
-      return []
     }
   }
 
@@ -202,9 +183,7 @@
       </select>
     </div>
   </div>
-  <Button color="primary" class="m-3 mx-auto" onclick={() => save_server_settings(settings)}
-    >Save</Button
-  >
+  <Button color="primary" class="m-3 mx-auto" onclick={() => save_settings()}>Save</Button>
 </div>
 
 <Modal size="lg" title="Select folder" {modalStatus} {closeModal}>

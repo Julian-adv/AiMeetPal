@@ -13,6 +13,7 @@
   import { TBoxLineDesign } from 'svelte-remix'
   import LoadSession from './LoadSession.svelte'
   import type { Session } from '../types/session'
+  import { save_json } from '../lib/files.svelte'
 
   let nextId = 1
   let user_name = 'Julien'
@@ -361,31 +362,16 @@
       }
 
       // Then save the session
-      let story_entries: StoryEntries = []
-      for (let i = 0; i < g_state.story_entries.length; i++) {
-        // Create a deep copy of the entry first
-        story_entries.push({ ...g_state.story_entries[i] })
-        // Then handle the images array separately
-        story_entries[i].images = g_state.story_entries[i].images.map((image_entry) => ({
-          ...image_entry,
-          image: null,
-        }))
-      }
       const payload = {
         session_name: session_name,
         system_token_count: g_state.system_token_count,
         selected_char: session_char,
-        story_entries: story_entries,
+        story_entries: g_state.story_entries,
       }
-      const response = await fetch('http://localhost:5000/api/save-session', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(payload),
-      })
-      const data = await response.json()
-      console.log(data)
+      await save_json(
+        `sessions/${session_char.file_name.replace('.card', '/')}/${session_name}/session.json`,
+        payload
+      )
     } catch (e) {
       console.error('Failed to save session:', e)
     }

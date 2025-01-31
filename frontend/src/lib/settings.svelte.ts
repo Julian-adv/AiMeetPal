@@ -1,4 +1,4 @@
-import { load_json } from './files.svelte'
+import { load_json, save_json } from './files.svelte'
 
 interface InfermaticAISettings {
   api_key: string
@@ -23,6 +23,7 @@ interface Settings {
   openai: OpenAISettings
   checkpoints_folder: string
   checkpoint_name: string
+  prefix: string
 }
 
 export const settings: Settings = $state({
@@ -44,6 +45,7 @@ export const settings: Settings = $state({
   },
   checkpoints_folder: '.',
   checkpoint_name: '',
+  prefix: '',
 })
 
 interface Preset {
@@ -77,4 +79,8 @@ export async function load_settings() {
       preset.max_length = server_settings.openai.preset.openai_max_context
     }
   }
+}
+
+export async function save_settings() {
+  await save_json('settings.json', settings)
 }

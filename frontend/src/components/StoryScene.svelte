@@ -1,9 +1,9 @@
 <script lang="ts">
   import type { StoryEntry } from '../types/story'
   import { Button, Popover, Toast } from 'svelte-5-ui-lib'
-  import { PencilSquare, ArrowPath, Camera } from 'svelte-heros-v2'
+  import { PencilSquare, ArrowPath } from 'svelte-heros-v2'
   import { generate_image, generate_prompt } from '../lib/generate_image.svelte'
-  import { highlightQuotes } from '../lib/util'
+  import { get_prompt_with_prefix, highlightQuotes } from '../lib/util'
   import { StoryEntryState } from '../types/story'
   import ImageOrSpinner from './ImageOrSpinner.svelte'
   import { settings } from '../lib/settings.svelte'
@@ -86,7 +86,12 @@
       width: width,
       height: height,
       prompt: prompt,
-      image: await generate_image(settings.checkpoint_name, prompt, width, height),
+      image: await generate_image(
+        settings.checkpoint_name,
+        get_prompt_with_prefix(prompt),
+        width,
+        height
+      ),
     }
     entry.images = [...entry.images, image_entry]
     entry.active_image = entry.images.length - 1
@@ -190,16 +195,6 @@
         >
         <Popover triggeredBy="#edit_content{index}" class="text-sm p-2">Edit content</Popover>
         {#if entry.state !== 'no_image'}
-          <Button
-            id="regenerate_image{index}"
-            color="light"
-            size="xs"
-            class="p-1 border-none text-neutral-400 focus:ring-0"
-            onclick={regenerate_image}><Camera size="20" /></Button
-          >
-          <Popover triggeredBy="#regenerate_image{index}" class="text-sm p-2"
-            >Regenerate image</Popover
-          >
           <Button
             id="regenerate_content{index}"
             color="light"

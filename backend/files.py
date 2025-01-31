@@ -79,6 +79,7 @@ async def save_json(data: SaveJson):
         with open(full_path, 'w', encoding='utf-8') as f:
             json.dump(data.json_data, f, ensure_ascii=False, indent=2)
             
+        print(f"save json: {data.path}")
         return {"status": "success", "path": data.path}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

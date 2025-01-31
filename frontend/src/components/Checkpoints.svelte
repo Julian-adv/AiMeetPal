@@ -11,7 +11,7 @@
   import { StoryEntryState, type ImageEntry, type StoryEntry } from '../types/story'
   import { image_size, generate_image } from '../lib/generate_image.svelte'
   import { Button, Label } from 'svelte-5-ui-lib'
-  import { load_settings } from '../lib/settings.svelte'
+  import { load_settings, save_settings, settings } from '../lib/settings.svelte'
   import DropdownButton from './DropdownButton.svelte'
 
   interface Checkpoint {
@@ -78,6 +78,8 @@
       selected_prompt: prompt_index,
       checkpoints: checkpoints,
     })
+    settings.prefix = prefix
+    await save_settings()
   }
 
   async function start_generate_image() {
