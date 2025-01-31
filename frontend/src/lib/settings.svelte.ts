@@ -76,7 +76,8 @@ export async function load_settings() {
     if (settings.api_type === 'infermaticai') {
       preset.max_length = server_settings.infermaticai.preset.max_length
     } else if (settings.api_type === 'openai') {
-      preset.max_length = server_settings.openai.preset.openai_max_context
+      const preset_json = await load_json(server_settings.openai.preset)
+      preset.max_length = preset_json.openai_max_context
     }
   }
 }

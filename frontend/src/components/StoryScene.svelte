@@ -2,7 +2,7 @@
   import type { StoryEntry } from '../types/story'
   import { Button, Popover, Toast } from 'svelte-5-ui-lib'
   import { PencilSquare, ArrowPath } from 'svelte-heros-v2'
-  import { generate_image, generate_prompt } from '../lib/generate_image.svelte'
+  import { generate_image, image_size } from '../lib/generate_image.svelte'
   import { get_prompt_with_prefix, highlightQuotes } from '../lib/util'
   import { StoryEntryState } from '../types/story'
   import ImageOrSpinner from './ImageOrSpinner.svelte'
@@ -11,6 +11,7 @@
   import Handlebars from 'handlebars'
   import { TBoxLineDesign } from 'svelte-remix'
   import { onMount } from 'svelte'
+  import { send_stream, type ReceivedData } from '../lib/stream'
   import type { ImageEntry } from '../types/story'
 
   interface Prop {
@@ -74,13 +75,35 @@
     return 'character appearance: blonde\nenvironment: living room'
   }
 
+  const think_complete_regex = /<think>(.+?)<\/think>/s
+  let prompt = ''
+  let angle = $state(0)
+
+  function received_prompt(data: ReceivedData) {
+    if (data.reset) {
+      prompt = ''
+    }
+    if (data.text) {
+      prompt += data.text
+      angle += 90
+    }
+  }
+
   async function generate_initial_image() {
     const prev_prompt = get_prev_prompt(index)
-    const { prompt, width, height, error } = await generate_prompt(entry.content, prev_prompt)
+    prompt = ''
+    angle = 0
+    const error = await send_stream(
+      'scene-to-prompt',
+      { content: entry.content, prev_image_prompt: prev_prompt },
+      received_prompt
+    )
     if (error) {
       show_toast(error)
       return
     }
+    prompt = prompt.replace(think_complete_regex, '')
+    const { width, height } = image_size(prompt)
     entry.state = StoryEntryState.WaitImage
     const image_entry: ImageEntry = {
       width: width,
@@ -116,11 +139,17 @@
     }
   }
 
+  let think_listener_added = false
+
   function setup_think_buttons() {
+    if (!think_listener_added) {
+      return
+    }
     const think_buttons = document.querySelectorAll('.think-toggle')
     think_buttons.forEach((button) => {
       button.addEventListener('click', on_think_click)
     })
+    think_listener_added = true
   }
 
   function get_thinking_tag(thinking: boolean) {
@@ -138,7 +167,6 @@
   }
 
   function process_thinking(content: string) {
-    const think_complete_regex = /<think>(.+?)<\/think>/s
     const thinking_regex = /<think>(.+?)$/s
 
     const think_complete = content.match(think_complete_regex)
@@ -152,7 +180,9 @@
       const thinking = content.match(thinking_regex)
       if (thinking) {
         const replace_str = get_thinking_tag(true)
-        return content.replace(thinking_regex, replace_str)
+        const processed = content.replace(thinking_regex, replace_str)
+        setTimeout(setup_think_buttons, 0)
+        return processed
       }
     }
     return content
@@ -165,7 +195,7 @@
 
 <div class="story-scene">
   {#if entry.state !== StoryEntryState.NoImage}
-    <ImageOrSpinner {entry} {disabled} {regenerate_image} />{/if}
+    <ImageOrSpinner {entry} {disabled} {regenerate_image} {angle} />{/if}
   <Toast
     bind:toastStatus={show_toast_flag}
     dismissable={false}

@@ -14,6 +14,7 @@
   import LoadSession from './LoadSession.svelte'
   import type { Session } from '../types/session'
   import { save_json } from '../lib/files.svelte'
+  import { send_stream, type ReceivedData } from '../lib/stream'
 
   let nextId = 1
   let user_name = 'Julien'
@@ -48,25 +49,24 @@
     return text
   }
 
-  function received_text(text: string, reset: boolean) {
-    if (reset) {
+  function received_text(data: ReceivedData) {
+    if (data.reset) {
       g_state.story_entries[g_state.story_entries.length - 1].content = ''
-    } else {
+    } else if (data.text) {
       if (g_state.story_entries[g_state.story_entries.length - 1].speaker === '') {
         g_state.story_entries[g_state.story_entries.length - 1].content = formatResponse(
-          g_state.story_entries[g_state.story_entries.length - 1].content + text
+          g_state.story_entries[g_state.story_entries.length - 1].content + data.text
         )
       } else {
         g_state.story_entries[g_state.story_entries.length - 1].content =
-          g_state.story_entries[g_state.story_entries.length - 1].content + text
+          g_state.story_entries[g_state.story_entries.length - 1].content + data.text
       }
+    } else if (data.start_index !== undefined) {
+      g_state.start_index = data.start_index
     }
   }
 
-  async function send_chat(
-    entries: StoryEntries,
-    received: (text: string, reset: boolean) => void
-  ) {
+  async function send_chat(entries: StoryEntries, received: (data: ReceivedData) => void) {
     const chatEntries = entries.map(({ id, speaker, content, token_count }) => ({
       id,
       speaker,
@@ -87,53 +87,7 @@
       entries: chatEntries,
     }
     // console.log(payload)
-    const response = await fetch('http://localhost:5000/api/chat', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(payload),
-    })
-
-    if (!response.ok) {
-      throw new Error('Chat request failed')
-    }
-
-    const reader = response.body?.getReader()
-    if (!reader) {
-      throw new Error('Failed to get response reader')
-    }
-    const decoder = new TextDecoder()
-
-    await scrollToBottom()
-
-    while (true) {
-      const { value, done } = await reader.read()
-
-      if (done) break
-
-      const chunk = decoder.decode(value)
-      const lines = chunk.split('\n')
-
-      for (const line of lines) {
-        if (line.startsWith('data: ') && line.trim() !== 'data: ') {
-          try {
-            const data = JSON.parse(line.slice(6))
-            if (data.text) {
-              received(data.text, false)
-            }
-            if (data.start_index !== undefined) {
-              g_state.start_index = data.start_index
-            }
-            if (data.reset) {
-              received('', true)
-            }
-          } catch (e) {
-            console.error('Failed to parse JSON:', e)
-          }
-        }
-      }
-    }
+    error = await send_stream('chat', payload, received, scrollToBottom)
   }
 
   async function scrollToBottom() {

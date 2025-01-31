@@ -1,18 +1,3 @@
-async function scene_to_prompt(text: string, prev_image_prompt: string) {
-  const response = await fetch('http://localhost:5000/api/scene-to-prompt', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify({ content: text, prev_image_prompt: prev_image_prompt }),
-  })
-  if (!response.ok) {
-    return { prompt: '', error: response.toString() }
-  }
-  const data = await response.json()
-  return { prompt: data.prompt, error: null }
-}
-
 export function image_size(prompt: string) {
   const portrait = !!prompt.match(/format:\s*portrait/i)
   if (portrait) {
@@ -20,12 +5,6 @@ export function image_size(prompt: string) {
   } else {
     return { width: 1216, height: 832 }
   }
-}
-
-async function generate_prompt(content: string, prev_prompt: string) {
-  let { prompt, error } = await scene_to_prompt(content, prev_prompt)
-  const { width, height } = image_size(prompt)
-  return { prompt, width, height, error }
 }
 
 async function generate_image(
@@ -53,4 +32,4 @@ async function generate_image(
   return image
 }
 
-export { generate_image, generate_prompt }
+export { generate_image }

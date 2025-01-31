@@ -11,6 +11,7 @@
     regenerate_image?: () => void
     scale?: number
     landscape?: boolean
+    angle?: number
   }
 
   let {
@@ -19,6 +20,7 @@
     regenerate_image,
     scale = 1,
     landscape = false,
+    angle = 0,
   }: Prop = $props()
   let popover_id = `scene-image${get_id()}`
   const imageModal = uiHelpers()
@@ -79,7 +81,7 @@
 >
   <button type="button" class="image-placeholder" onclick={imageModal.toggle} {disabled}>
     {#if entry.state === StoryEntryState.WaitPrompt || entry.state === StoryEntryState.WaitContent}
-      <div class="spinner_square"></div>
+      <div class="spinner_square" style="transform: rotate({angle}deg);"></div>
     {:else if entry.state === StoryEntryState.WaitImage}
       <div class="spinner_circle"></div>
     {/if}
@@ -174,7 +176,8 @@
   .spinner_square {
     width: 32px;
     height: 32px;
-    animation: spin 1s linear infinite;
+    transition-property: transform, rotate;
+    transition-duration: 1s;
     border-radius: 0;
     border: 4px solid #bfc9eb;
   }

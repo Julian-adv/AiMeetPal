@@ -6,6 +6,7 @@ from chat_common import ChatMessage
 
 router = APIRouter()
 
+
 @router.post("/api/chat")
 async def chat(message: ChatMessage):
     settings = load_settings()
