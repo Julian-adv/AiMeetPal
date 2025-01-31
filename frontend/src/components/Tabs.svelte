@@ -53,6 +53,8 @@
 </div>
 
 <style>
+  @reference "tailwindcss/theme";
+
   .tabs-container {
     display: flex;
     flex-direction: column;

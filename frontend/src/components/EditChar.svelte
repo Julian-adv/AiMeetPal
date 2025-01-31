@@ -179,11 +179,13 @@
 </div>
 <Button color="primary" class="m-3 mx-auto" onclick={save_char}>Save</Button>
 
-<style lang="postcss">
+<style>
+  @reference "tailwindcss/theme";
+
   .edit-char-container {
     display: grid;
     grid-template-columns: 200px 1fr;
-    padding: 0rem;
+    padding: 0rem 0.25rem;
     border-radius: 8px;
     margin-bottom: 1rem;
     gap: 1rem;

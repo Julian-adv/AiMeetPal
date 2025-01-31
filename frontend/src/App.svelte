@@ -76,6 +76,8 @@
 </main>
 
 <style>
+  @reference "tailwindcss/theme";
+
   h1 {
     text-align: center;
     color: theme('colors.slate.600');

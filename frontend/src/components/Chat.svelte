@@ -440,7 +440,9 @@
 </div>
 <LoadSession {on_init} {on_load} />
 
-<style lang="postcss">
+<style>
+  @reference "tailwindcss";
+
   .chat-container {
     margin-top: 2rem;
     margin-bottom: 2rem;
@@ -459,7 +461,7 @@
     font-weight: bold;
   }
 
-  .chat-input {
+  :global(.chat-input) {
     width: 100%;
     padding: 0.5rem;
     font-size: 1rem;

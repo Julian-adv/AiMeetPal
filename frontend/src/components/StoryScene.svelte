@@ -216,6 +216,8 @@
 </div>
 
 <style>
+  @reference "tailwindcss/theme";
+
   .story-scene {
     text-align: left;
     margin: 1rem 0;

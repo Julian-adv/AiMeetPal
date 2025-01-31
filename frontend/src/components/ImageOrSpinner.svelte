@@ -121,6 +121,8 @@
 </Modal>
 
 <style>
+  @reference "tailwindcss/theme";
+
   .scene-image {
     position: relative;
     float: left;

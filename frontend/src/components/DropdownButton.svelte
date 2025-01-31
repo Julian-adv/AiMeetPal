@@ -32,7 +32,7 @@
   dropdownStatus={dropdown_status}
   closeDropdown={dropdown_close}
   params={{ y: 0, duration: 200, easing: sineIn }}
-  class="absolute right-1 top-7 w-96 text-left rounded border border-neutral-300"
+  class="absolute right-1 top-7 w-150 text-left rounded border border-neutral-300"
 >
   <DropdownUl>
     {#each options as option}

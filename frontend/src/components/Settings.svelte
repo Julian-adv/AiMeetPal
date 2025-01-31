@@ -214,7 +214,9 @@
   {/snippet}
 </Modal>
 
-<style lang="postcss">
+<style>
+  @reference "tailwindcss/theme";
+
   .settings-container {
     display: flex;
     flex-direction: column;

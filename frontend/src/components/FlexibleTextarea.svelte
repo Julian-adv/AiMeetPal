@@ -40,7 +40,7 @@
   bind:this={textarea}
   bind:value
   rows={1}
-  class={`p-2 rounded border border-neutral-300 outline-none w-full text-base h-auto focus:border-primary-500 bg-gray-50 ${className}`}
+  class={`p-2 rounded border border-neutral-300 outline-none w-full text-base h-auto bg-gray-50 ${className}`}
   {onkeydown}
   oninput={adjust_height}
 ></textarea>
