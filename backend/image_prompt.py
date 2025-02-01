@@ -1,6 +1,7 @@
 from fastapi import HTTPException, APIRouter
 from pydantic import BaseModel
 import httpx
+import json
 from settings import load_api_settings, load_preset, load_settings
 from payload import make_payload, make_openai_payload
 from stream_post import stream_post
@@ -125,9 +126,8 @@ async def scene_to_prompt_openai(scene: SceneContent):
             },
         ]
 
-        print("here")
         payload = make_openai_payload(messages, settings, preset, stream=True)
-        print("payload:", payload)
+        print("payload:", json.dumps(payload, indent=2))
 
         return await stream_post(
             f'{settings["custom_url"]}/chat/completions', settings["api_key"], payload, 0)
