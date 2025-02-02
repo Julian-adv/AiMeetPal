@@ -4,6 +4,7 @@ from settings import load_settings
 
 router = APIRouter()
 
+
 async def get_model_infermaticai():
     try:
         settings = load_settings()
@@ -17,7 +18,8 @@ async def get_model_infermaticai():
             if response.status_code == 200:
                 result = response.json()
                 print(result)
-                models = sorted([x["id"] for x in result["data"]], key=str.lower)
+                models = sorted([x["id"]
+                                for x in result["data"]], key=str.lower)
                 return {"success": True, "models": models}
             else:
                 print(response)
@@ -40,7 +42,8 @@ async def get_model_openai():
             if response.status_code == 200:
                 result = response.json()
                 print(result)
-                models = sorted([x["id"] for x in result["data"]], key=str.lower)
+                models = sorted([x["id"]
+                                for x in result["data"]], key=str.lower)
                 return {"success": True, "models": models}
             else:
                 print(response)

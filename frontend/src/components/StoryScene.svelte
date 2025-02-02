@@ -25,9 +25,11 @@
   let { entry, regenerate_content, index, image_generated, disabled }: Prop = $props()
   let edit_mode = $state(false)
   let edit_textarea: HTMLTextAreaElement | null = $state(null)
-  let rotationAngle = 0
+  let rotate_angle = 0
   let show_toast_flag = $state(false)
   let toast_message = $state('')
+  let angle_timer: number | undefined = undefined
+  let angle = $state(0)
 
   function show_toast(message: string) {
     toast_message = message
@@ -77,7 +79,45 @@
 
   const think_complete_regex = /<think>(.+?)<\/think>/s
   let prompt = ''
-  let angle = $state(0)
+
+  function clear_angle_timer() {
+    if (angle_timer !== undefined) {
+      clearTimeout(angle_timer)
+      angle_timer = undefined
+    }
+  }
+
+  function update_angle() {
+    clear_angle_timer()
+
+    let amplitude = 360
+    let time_constant = 30
+
+    angle_timer = window.setInterval(() => {
+      const delta = amplitude / time_constant
+      angle += delta
+      amplitude -= delta
+      if (delta < 0.1) {
+        clearInterval(angle_timer)
+      }
+    }, 1000 / time_constant)
+  }
+
+  function update_rotate_angle() {
+    clear_angle_timer()
+
+    let amplitude = 360
+    let time_constant = 30
+
+    angle_timer = window.setInterval(() => {
+      const delta = amplitude / time_constant
+      rotate_angle += delta
+      amplitude -= delta
+      if (delta < 0.1) {
+        clearInterval(angle_timer)
+      }
+    }, 1000 / time_constant)
+  }
 
   function received_prompt(data: ReceivedData) {
     if (data.reset) {
@@ -85,7 +125,7 @@
     }
     if (data.text) {
       prompt += data.text
-      angle += 90
+      update_angle()
     }
   }
 
@@ -152,16 +192,10 @@
 
   function get_thinking_tag(thinking: boolean) {
     if (thinking) {
-      rotationAngle = (rotationAngle + 10) % 360
-    } else {
-      rotationAngle = 0
+      update_rotate_angle()
     }
-    const svg = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="size-6" style="transform: rotate(${rotationAngle}deg)">
-  <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12a7.5 7.5 0 0 0 15 0m-15 0a7.5 7.5 0 1 1 15 0m-15 0H3m16.5 0H21m-1.5 0H12m-8.457 3.077 1.41-.513m14.095-5.13 1.41-.513M5.106 17.785l1.15-.964m11.49-9.642 1.149-.964M7.501 19.795l.75-1.3m7.5-12.99.75-1.3m-6.063 16.658.26-1.477m2.605-14.772.26-1.477m0 17.726-.26-1.477M10.698 4.614l-.26-1.477M16.5 19.794l-.75-1.299M7.5 4.205 12 12m6.894 5.785-1.149-.964M6.256 7.178l-1.15-.964m15.352 8.864-1.41-.513M4.954 9.435l-1.41-.514M12.002 12l-3.75 6.495" />
-</svg>
-`
-    return `<div class="think ${collapsed ? 'collapsed' : ''} ${thinking ? 'thinking' : ''}"><button id="think-toggle${entry.id}" class="think-toggle">▼</button><div class="spinner">${thinking ? 'thinking' : 'thought'}${svg}
-</div><span class="think-content">$1</span></div>`
+    const size = 14
+    return `<div class="think ${collapsed ? 'collapsed' : ''} ${thinking ? 'thinking' : ''}"><button id="think-toggle${entry.id}" class="think-toggle">▼</button><div class="spinner">${thinking ? 'thinking' : 'thought'}<div class="spinner-square ${rotate_angle === 0 ? 'glow' : ''}" style="transform: rotate(${rotate_angle}deg); width: ${size}px; height: ${size}px;"></div></div><span class="think-content">$1</span></div>`
   }
 
   function process_thinking(content: string) {
@@ -300,14 +334,33 @@
     transform: rotate(-90deg);
   }
 
-  .story-scene :global .think.collapsed .spinner svg {
+  .story-scene :global .think.collapsed .spinner .spinner-square {
     display: none;
     transform-origin: center;
     transition: transform 0.4s ease-in-out;
   }
 
-  .story-scene :global .think.collapsed.thinking .spinner svg {
+  .story-scene :global .think.collapsed.thinking .spinner .spinner-square {
     display: inline;
+    margin-left: 0.3rem;
+    border: 2px solid #bfc9eb;
+    border-radius: 2px;
+    transition: transform 1s linear;
+  }
+
+  .story-scene :global .think.collapsed.thinking .spinner .spinner-square .glow {
+    animation: glow-animation 1.5s infinite alternate;
+  }
+
+  @keyframes glow-animation {
+    from {
+      box-shadow: 0 0 1px #bfc9eb;
+      filter: brightness(1);
+    }
+    to {
+      box-shadow: 0 0 10px #ddf;
+      filter: brightness(1.1);
+    }
   }
 
   .speaker {

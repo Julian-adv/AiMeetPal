@@ -7,18 +7,22 @@ from chat_common import ChatMessage, find_start_index
 from prompt import make_prompt
 from payload import make_payload
 
+
 async def chat_infermaticai(message: ChatMessage):
     settings = load_api_settings()
     preset = load_preset()
+
     async def generate():
         async with httpx.AsyncClient() as client:
             wiBefore = ""
             wiAfter = ""
             persona = "Julien is living alone in a luxury mansion."
             user = "Julien"
-            start_index = find_start_index(message.system_token_count, message.entries, preset["max_length"] - settings["max_tokens"], user)
+            start_index = find_start_index(
+                message.system_token_count, message.entries, preset["max_length"] - settings["max_tokens"], user)
             print(f"start_index: {start_index}")
-            prompt = make_prompt(user, message.info.name, wiBefore, message.info.description, message.info.personality, message.info.scenario, wiAfter, persona, message.entries, start_index)
+            prompt = make_prompt(user, message.info.name, wiBefore, message.info.description,
+                                 message.info.personality, message.info.scenario, wiAfter, persona, message.entries, start_index)
             payload = make_payload(prompt, settings, preset)
 
             async with client.stream(
@@ -31,8 +35,9 @@ async def chat_infermaticai(message: ChatMessage):
                 }
             ) as response:
                 if response.status_code != 200:
-                    raise HTTPException(status_code=response.status_code, detail="API request failed")
-                
+                    raise HTTPException(
+                        status_code=response.status_code, detail="API request failed")
+
                 async for line in response.aiter_lines():
                     if line.startswith("data: "):
                         data = line[6:]

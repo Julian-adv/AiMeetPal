@@ -4,6 +4,7 @@
   import { Popover, Modal, uiHelpers } from 'svelte-5-ui-lib'
   import { Button } from 'svelte-5-ui-lib'
   import { ArrowLeft, ArrowRight, Camera } from 'svelte-heros-v2'
+  import Spinner from './Spinner.svelte'
 
   interface Prop {
     entry: StoryEntry
@@ -81,7 +82,7 @@
 >
   <button type="button" class="image-placeholder" onclick={imageModal.toggle} {disabled}>
     {#if entry.state === StoryEntryState.WaitPrompt || entry.state === StoryEntryState.WaitContent}
-      <div class="spinner_square" style="transform: rotate({angle}deg);"></div>
+      <Spinner {angle} size={32} />
     {:else if entry.state === StoryEntryState.WaitImage}
       <div class="spinner_circle"></div>
     {/if}
@@ -171,15 +172,6 @@
     align-items: end;
     z-index: 1;
     background: transparent;
-  }
-
-  .spinner_square {
-    width: 32px;
-    height: 32px;
-    transition-property: transform, rotate;
-    transition-duration: 1s;
-    border-radius: 0;
-    border: 4px solid #bfc9eb;
   }
 
   .spinner_circle {

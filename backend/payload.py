@@ -37,7 +37,8 @@ OPENAI_KEYS = [
     'seed',
     'messages',
     'max_completion_tokens',
-];
+]
+
 
 def make_payload(prompt: str, settings: dict, preset: dict, stream: bool = True) -> dict:
     payload = {
@@ -48,9 +49,11 @@ def make_payload(prompt: str, settings: dict, preset: dict, stream: bool = True)
         "stream": stream,
     }
     # Filter preset to only include keys in INFERMATICAI_KEYS
-    filtered_preset = {k: v for k, v in payload.items() if k in INFERMATICAI_KEYS}
-    
+    filtered_preset = {k: v for k,
+                       v in payload.items() if k in INFERMATICAI_KEYS}
+
     return filtered_preset
+
 
 def make_openai_payload(messages: list, settings: dict, preset: dict, stream: bool = True) -> dict:
     payload = {
@@ -65,5 +68,5 @@ def make_openai_payload(messages: list, settings: dict, preset: dict, stream: bo
     }
     # Filter preset to only include keys in OPENAI_KEYS
     filtered_preset = {k: v for k, v in payload.items() if k in OPENAI_KEYS}
-    
+
     return filtered_preset

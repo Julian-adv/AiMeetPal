@@ -5,8 +5,10 @@ from fastapi import APIRouter, HTTPException
 router = APIRouter()
 settings = None
 
+
 def get_data_path(subpath):
     return str(pathlib.Path(__file__).parent.parent / "data" / subpath)
+
 
 def load_settings(reload=False):
     global settings
@@ -19,6 +21,7 @@ def load_settings(reload=False):
 
     return settings
 
+
 def load_api_settings():
     settings = load_settings()
     if settings['api_type'] == 'infermaticai':
@@ -26,9 +29,11 @@ def load_api_settings():
     elif settings['api_type'] == 'openai':
         return settings['openai']
 
+
 def load_api_settings_for(api: str) -> dict:
     settings = load_settings()
     return settings[api]
+
 
 def load_preset():
     settings = load_settings()
@@ -39,6 +44,7 @@ def load_preset():
     with open(path, "r") as f:
         return json.load(f)
 
+
 def load_preset_for(api: str) -> dict:
     if api == 'infermaticai':
         path = get_data_path(settings['infermaticai']['preset'])
@@ -46,6 +52,7 @@ def load_preset_for(api: str) -> dict:
         path = get_data_path(settings['openai']['preset'])
     with open(path, "r") as f:
         return json.load(f)
+
 
 def load_instruct():
     settings = load_settings()
@@ -55,6 +62,7 @@ def load_instruct():
             return json.load(f)
     return {}
 
+
 def load_context():
     settings = load_settings()
     if settings['api_type'] == 'infermaticai':
@@ -62,6 +70,7 @@ def load_context():
         with open(path, "r") as f:
             return json.load(f)
     return {}
+
 
 @router.get("/api/settings")
 async def load_settings_api():
@@ -73,6 +82,7 @@ async def load_settings_api():
     except Exception as e:
         print(f"Error loading settings: {e}")
         raise HTTPException(status_code=500, detail=str(e))
+
 
 @router.post("/api/save_settings")
 async def save_settings(data: dict):
