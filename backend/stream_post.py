@@ -4,7 +4,7 @@ from fastapi import HTTPException
 from fastapi.responses import StreamingResponse
 
 
-async def stream_post(url: str, api_key: str, payload: dict, start_index: int):
+async def stream_post(url: str, api_key: str, payload: dict, openai: bool = True, start_index: int = 0):
     async def generate():
         async with httpx.AsyncClient() as client:
 
@@ -42,9 +42,15 @@ async def stream_post(url: str, api_key: str, payload: dict, start_index: int):
                                     choices = json_data.get("choices")
                                     if len(choices) == 0:
                                         continue
-                                    text = choices[0].get("delta", {}).get("content")
-                                    if text:
-                                        yield f"data: {json.dumps({'text': text})}\n\n"
+                                    if openai:
+                                        text = choices[0].get(
+                                            "delta", {}).get("content")
+                                        if text:
+                                            yield f"data: {json.dumps({'text': text})}\n\n"
+                                    else:
+                                        text = choices[0].get("text")
+                                        if text:
+                                            yield f"data: {json.dumps({'text': text})}\n\n"
                                 except json.JSONDecodeError:
                                     continue
                 except httpx.TimeoutException as e:
@@ -54,7 +60,8 @@ async def stream_post(url: str, api_key: str, payload: dict, start_index: int):
                             status_code=504,
                             detail=f"Timeout after {max_retries} retries: {str(e)}",
                         )
-                    print(f"Timeout occurred. Retrying... ({retry_count}/{max_retries})")
+                    print(
+                        f"Timeout occurred. Retrying... ({retry_count}/{max_retries})")
                     yield f"data: {json.dumps({'reset': True})}\n\n"
                     continue
                 break

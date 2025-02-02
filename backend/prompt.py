@@ -4,7 +4,6 @@ import html
 
 
 def make_prompt(user: str, char: str, wiBefore: str, description: str, personality: str, scenario: str, wiAfter: str, persona: str, entries: list, start_index: int) -> str:
-    preset = settings.load_preset()
     context = settings.load_context()
     instruct = settings.load_instruct()
 

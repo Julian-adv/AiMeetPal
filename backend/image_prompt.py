@@ -1,6 +1,5 @@
 from fastapi import HTTPException, APIRouter
 from pydantic import BaseModel
-import httpx
 import json
 from settings import load_api_settings, load_preset, load_settings
 from payload import make_payload, make_openai_payload
@@ -54,32 +53,10 @@ async def scene_to_prompt_infermaticai(scene: SceneContent):
             '\n'
         )
 
-        payload = make_payload(system_prompt, settings, preset, stream=False)
+        payload = make_payload(system_prompt, settings, preset, stream=True)
+        print("payload:", json.dumps(payload, indent=2))
 
-        with httpx.Client(timeout=httpx.Timeout(60.0, connect=30.0)) as client:
-            print("generating image prompt with infermaticai...")
-            print(f"prev_image_prompt: {scene.prev_image_prompt}")
-            print(f"content: {scene.content}")
-            response = client.post(
-                "https://api.totalgpt.ai/v1/completions",
-                headers={
-                    "Authorization": f"Bearer {settings['api_key']}",
-                    "Content-Type": "application/json",
-                },
-                json=payload,
-            )
-
-            print(response)
-            if response.status_code != 200:
-                raise HTTPException(
-                    status_code=response.status_code,
-                    detail=f"API request failed: {response.text}"
-                )
-
-            result = response.json()
-            prompt = result["choices"][0]["text"].strip()
-            print(prompt)
-            return ImagePrompt(prompt=prompt)
+        return await stream_post("https://api.totalgpt.ai/v1/completions", settings["api_key"], payload, openai=False)
 
     except Exception as e:
         print(e)
@@ -130,7 +107,7 @@ async def scene_to_prompt_openai(scene: SceneContent):
         print("payload:", json.dumps(payload, indent=2))
 
         return await stream_post(
-            f'{settings["custom_url"]}/chat/completions', settings["api_key"], payload, 0)
+            f'{settings["custom_url"]}/chat/completions', settings["api_key"], payload)
 
     except Exception as e:
         print(e)

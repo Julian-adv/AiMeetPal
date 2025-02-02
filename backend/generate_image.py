@@ -29,6 +29,7 @@ ksampler = None
 vae_decoder = None
 detailer = None
 
+
 def image_to_base64(image: Image.Image) -> str:
     buffered = BytesIO()
     image.save(buffered, format="PNG")
@@ -55,7 +56,7 @@ class ImageGenerationRequest(BaseModel):
 @router.post("/api/generate-image")
 async def generate_image(request: ImageGenerationRequest):
     try:
-        print(request)
+        print(f"generate_image: {request}")
         negative_prompt = request.negative_prompt if request.negative_prompt else ""
 
         global check_point
@@ -63,10 +64,12 @@ async def generate_image(request: ImageGenerationRequest):
         global vae
         global ckpt_path
         settings = load_settings()
-        new_ckpt_path = os.path.join(settings['checkpoints_folder'], request.checkpoint_name)
+        new_ckpt_path = os.path.join(
+            settings['checkpoints_folder'], request.checkpoint_name)
         if not check_point or new_ckpt_path != ckpt_path:
             ckpt_path = new_ckpt_path
-            check_point,clip,vae,_ = comfy.sd.load_checkpoint_guess_config(ckpt_path, output_vae=True, output_clip=True, embedding_directory=embedding_path)
+            check_point, clip, vae, _ = comfy.sd.load_checkpoint_guess_config(
+                ckpt_path, output_vae=True, output_clip=True, embedding_directory=embedding_path)
 
         global empty_latent_image
         if not empty_latent_image:
@@ -88,10 +91,13 @@ async def generate_image(request: ImageGenerationRequest):
         positive = encode(clip, request.prompt)
         negative = encode(clip, negative_prompt)
 
-        seed = random.randint(1, 2147483647)  # 1 to 2^31-1 (max 32-bit signed integer)
+        # 1 to 2^31-1 (max 32-bit signed integer)
+        seed = random.randint(1, 2147483647)
 
-        latent_image = empty_latent_image.generate(request.width, request.height)
-        latent_image = ksampler.sample(check_point, seed, 50, 4.5, "dpmpp_2m_sde", "karras", positive[0], negative[0], latent_image[0], denoise=1.0)
+        latent_image = empty_latent_image.generate(
+            request.width, request.height)
+        latent_image = ksampler.sample(check_point, seed, 50, 4.5, "dpmpp_2m_sde",
+                                       "karras", positive[0], negative[0], latent_image[0], denoise=1.0)
         vae_decoded_image = vae_decoder.decode(vae, latent_image[0], 512)
         # Process image with FaceDetailer
         enhanced_image = detailer.doit(

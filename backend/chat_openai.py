@@ -34,4 +34,4 @@ async def chat_openai(message: ChatMessage):
         preset,
     )
     payload = make_openai_payload(messages, settings, preset)
-    return await stream_post(settings["custom_url"] + "/chat/completions", settings["api_key"], payload, start_index)
+    return await stream_post(settings["custom_url"] + "/chat/completions", settings["api_key"], payload, start_index=start_index)

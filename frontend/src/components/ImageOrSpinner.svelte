@@ -12,7 +12,7 @@
     regenerate_image?: () => void
     scale?: number
     landscape?: boolean
-    angle?: number
+    tick?: number
   }
 
   let {
@@ -21,7 +21,7 @@
     regenerate_image,
     scale = 1,
     landscape = false,
-    angle = 0,
+    tick = 0,
   }: Prop = $props()
   let popover_id = `scene-image${get_id()}`
   const imageModal = uiHelpers()
@@ -82,7 +82,7 @@
 >
   <button type="button" class="image-placeholder" onclick={imageModal.toggle} {disabled}>
     {#if entry.state === StoryEntryState.WaitPrompt || entry.state === StoryEntryState.WaitContent}
-      <Spinner {angle} size={32} />
+      <Spinner {tick} size={32} />
     {:else if entry.state === StoryEntryState.WaitImage}
       <div class="spinner_circle"></div>
     {/if}

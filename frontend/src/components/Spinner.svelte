@@ -1,10 +1,41 @@
 <script lang="ts">
   interface Props {
-    angle?: number
+    tick?: number
     size?: number
   }
 
-  let { angle = 0, size = 32 }: Props = $props()
+  let { tick = 0, size = 32 }: Props = $props()
+
+  let angle_timer: number | undefined = undefined
+  let angle = $state(0)
+
+  $effect(() => {
+    tick
+    update_angle()
+  })
+
+  function clear_angle_timer() {
+    if (angle_timer !== undefined) {
+      clearTimeout(angle_timer)
+      angle_timer = undefined
+    }
+  }
+
+  function update_angle() {
+    clear_angle_timer()
+
+    let amplitude = 360
+    let time_constant = 30
+
+    angle_timer = window.setInterval(() => {
+      const delta = amplitude / time_constant
+      angle += delta
+      amplitude -= delta
+      if (delta < 0.1) {
+        clearInterval(angle_timer)
+      }
+    }, 1000 / time_constant)
+  }
 </script>
 
 <div

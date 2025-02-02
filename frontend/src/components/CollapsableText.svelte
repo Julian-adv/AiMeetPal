@@ -1,0 +1,69 @@
+<script lang="ts">
+  import Spinner from './Spinner.svelte'
+
+  interface Props {
+    thinking: boolean
+    content: string
+  }
+  let { thinking, content }: Props = $props()
+  let collapsed = $state(true)
+  let tick = $state(0)
+  const size = 14
+
+  $effect(() => {
+    content
+    tick += 1
+  })
+</script>
+
+<div class="think ${collapsed ? 'collapsed' : ''} ${thinking ? 'thinking' : ''}">
+  <button class="think-toggle">▼</button>
+  <div class="spinner">
+    ${thinking ? 'thinking' : 'thought'}
+    <Spinner {tick} {size} />
+  </div>
+  <span class="think-content">{content}</span>
+</div>
+
+<style>
+  .think {
+    color: var(--colors-gray-400);
+  }
+
+  .think-toggle {
+    background: none;
+    border: none;
+    color: inherit;
+    cursor: pointer;
+    padding: 0;
+    font-size: 0.8em;
+    transition: transform 0.2s;
+    margin-top: 0.25rem;
+  }
+
+  .think .spinner {
+    display: none;
+  }
+
+  .think :global .collapsed .spinner {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    font-style: italic;
+    margin-left: 0.5rem;
+  }
+
+  .think :global .collapsed .think-content {
+    display: none;
+  }
+
+  .think :global .collapsed .think-toggle {
+    transform: rotate(-90deg);
+  }
+
+  .think :global .collapsed .spinner .spinner-square {
+    display: none;
+    transform-origin: center;
+    transition: transform 0.4s ease-in-out;
+  }
+</style>

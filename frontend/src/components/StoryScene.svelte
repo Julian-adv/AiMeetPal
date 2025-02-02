@@ -6,6 +6,7 @@
   import { get_prompt_with_prefix, highlightQuotes } from '../lib/util'
   import { StoryEntryState } from '../types/story'
   import ImageOrSpinner from './ImageOrSpinner.svelte'
+  import Spinner from './Spinner.svelte'
   import { settings } from '../lib/settings.svelte'
   import { g_state } from '../lib/state.svelte'
   import Handlebars from 'handlebars'
@@ -13,6 +14,7 @@
   import { onMount } from 'svelte'
   import { send_stream, type ReceivedData } from '../lib/stream'
   import type { ImageEntry } from '../types/story'
+  import CollapsableText from './CollapsableText.svelte'
 
   interface Prop {
     entry: StoryEntry
@@ -25,11 +27,13 @@
   let { entry, regenerate_content, index, image_generated, disabled }: Prop = $props()
   let edit_mode = $state(false)
   let edit_textarea: HTMLTextAreaElement | null = $state(null)
-  let rotate_angle = 0
   let show_toast_flag = $state(false)
   let toast_message = $state('')
-  let angle_timer: number | undefined = undefined
-  let angle = $state(0)
+  let show_thinking = $state(false)
+  let thinking = $state(false)
+  let thinking_content = $state('')
+  let rest_content = $state('')
+  let tick = $state(0)
 
   function show_toast(message: string) {
     toast_message = message
@@ -80,59 +84,20 @@
   const think_complete_regex = /<think>(.+?)<\/think>/s
   let prompt = ''
 
-  function clear_angle_timer() {
-    if (angle_timer !== undefined) {
-      clearTimeout(angle_timer)
-      angle_timer = undefined
-    }
-  }
-
-  function update_angle() {
-    clear_angle_timer()
-
-    let amplitude = 360
-    let time_constant = 30
-
-    angle_timer = window.setInterval(() => {
-      const delta = amplitude / time_constant
-      angle += delta
-      amplitude -= delta
-      if (delta < 0.1) {
-        clearInterval(angle_timer)
-      }
-    }, 1000 / time_constant)
-  }
-
-  function update_rotate_angle() {
-    clear_angle_timer()
-
-    let amplitude = 360
-    let time_constant = 30
-
-    angle_timer = window.setInterval(() => {
-      const delta = amplitude / time_constant
-      rotate_angle += delta
-      amplitude -= delta
-      if (delta < 0.1) {
-        clearInterval(angle_timer)
-      }
-    }, 1000 / time_constant)
-  }
-
   function received_prompt(data: ReceivedData) {
     if (data.reset) {
       prompt = ''
     }
     if (data.text) {
       prompt += data.text
-      update_angle()
+      tick += 1
     }
   }
 
   async function generate_initial_image() {
     const prev_prompt = get_prev_prompt(index)
     prompt = ''
-    angle = 0
+    tick = 0
     const error = await send_stream(
       'scene-to-prompt',
       { content: entry.content, prev_image_prompt: prev_prompt },
@@ -172,62 +137,51 @@
     entry.state = StoryEntryState.WaitPrompt
   }
 
-  let collapsed = true
-
-  function on_think_click(this: HTMLElement) {
-    const thinkElement = this.closest('.think')
-    if (thinkElement) {
-      collapsed = thinkElement.classList.toggle('collapsed')
+  function match_and_rest(
+    regex: RegExp,
+    content: string
+  ): { matched: boolean; match_content: string; rest: string } {
+    const match = content.match(regex)
+    if (match) {
+      const processed = content.replace(regex, '')
+      return { matched: true, match_content: match[1], rest: processed }
+    } else {
+      return { matched: false, match_content: '', rest: content }
     }
-  }
-
-  function setup_think_buttons() {
-    const button = document.getElementById(`think-toggle${entry.id}`)
-    if (!button) return
-    if (!button.dataset.thinkListener) {
-      button.addEventListener('click', on_think_click)
-      button.dataset.thinkListener = 'true'
-    }
-  }
-
-  function get_thinking_tag(thinking: boolean) {
-    if (thinking) {
-      update_rotate_angle()
-    }
-    const size = 14
-    return `<div class="think ${collapsed ? 'collapsed' : ''} ${thinking ? 'thinking' : ''}"><button id="think-toggle${entry.id}" class="think-toggle">▼</button><div class="spinner">${thinking ? 'thinking' : 'thought'}<div class="spinner-square ${rotate_angle === 0 ? 'glow' : ''}" style="transform: rotate(${rotate_angle}deg); width: ${size}px; height: ${size}px;"></div></div><span class="think-content">$1</span></div>`
   }
 
   function process_thinking(content: string) {
     const thinking_regex = /<think>(.+?)$/s
 
-    const think_complete = content.match(think_complete_regex)
-    if (think_complete) {
-      const replace_str = get_thinking_tag(false)
-      const processed = content.replace(think_complete_regex, replace_str)
-      // Set up button events asynchronously
-      setTimeout(setup_think_buttons, 0)
-      return processed
+    const { matched, match_content, rest } = match_and_rest(think_complete_regex, content)
+    if (matched) {
+      show_thinking = true
+      thinking = false
+      thinking_content = match_content
+      return rest
     } else {
-      const thinking = content.match(thinking_regex)
-      if (thinking) {
-        const replace_str = get_thinking_tag(true)
-        const processed = content.replace(thinking_regex, replace_str)
-        setTimeout(setup_think_buttons, 0)
-        return processed
+      const { matched, match_content, rest } = match_and_rest(thinking_regex, content)
+      if (matched) {
+        show_thinking = true
+        thinking = true
+        thinking_content = match_content
+        return rest
       }
     }
+    show_thinking = false
     return content
   }
 
-  onMount(() => {
-    setup_think_buttons()
+  $effect(() => {
+    rest_content = process_thinking(highlightQuotes(entry.content))
   })
+
+  onMount(() => {})
 </script>
 
 <div class="story-scene">
   {#if entry.state !== StoryEntryState.NoImage}
-    <ImageOrSpinner {entry} {disabled} {regenerate_image} {angle} />{/if}
+    <ImageOrSpinner {entry} {disabled} {regenerate_image} {tick} />{/if}
   <Toast
     bind:toastStatus={show_toast_flag}
     dismissable={false}
@@ -245,7 +199,10 @@
     ></textarea>
     <Button class="m-2" onclick={save_entry}>Save</Button>
   {:else}
-    {@html process_thinking(highlightQuotes(entry.content))}
+    {#if show_thinking}
+      <CollapsableText {thinking} content={thinking_content} />
+    {/if}
+    {@html rest_content}
     {#if !disabled}
       <div class="flex gap-0 items-center">
         <Button
@@ -297,70 +254,6 @@
 
   .story-scene :global .quoted-text {
     color: theme('colors.blue.800');
-  }
-
-  .story-scene :global .think {
-    color: theme('colors.gray.400');
-  }
-
-  .story-scene :global .think-toggle {
-    background: none;
-    border: none;
-    color: inherit;
-    cursor: pointer;
-    padding: 0;
-    font-size: 0.8em;
-    transition: transform 0.2s;
-    margin-top: 0.25rem;
-  }
-
-  .story-scene :global .think .spinner {
-    display: none;
-  }
-
-  .story-scene :global .think.collapsed .spinner {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.25rem;
-    font-style: italic;
-    margin-left: 0.5rem;
-  }
-
-  .story-scene :global .think.collapsed .think-content {
-    display: none;
-  }
-
-  .story-scene :global .think.collapsed .think-toggle {
-    transform: rotate(-90deg);
-  }
-
-  .story-scene :global .think.collapsed .spinner .spinner-square {
-    display: none;
-    transform-origin: center;
-    transition: transform 0.4s ease-in-out;
-  }
-
-  .story-scene :global .think.collapsed.thinking .spinner .spinner-square {
-    display: inline;
-    margin-left: 0.3rem;
-    border: 2px solid #bfc9eb;
-    border-radius: 2px;
-    transition: transform 1s linear;
-  }
-
-  .story-scene :global .think.collapsed.thinking .spinner .spinner-square .glow {
-    animation: glow-animation 1.5s infinite alternate;
-  }
-
-  @keyframes glow-animation {
-    from {
-      box-shadow: 0 0 1px #bfc9eb;
-      filter: brightness(1);
-    }
-    to {
-      box-shadow: 0 0 10px #ddf;
-      filter: brightness(1.1);
-    }
   }
 
   .speaker {
