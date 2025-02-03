@@ -34,7 +34,6 @@ OPENAI_KEYS = [
     'logprobs',
     'max_tokens',
     'best_of',
-    'seed',
     'messages',
     'max_completion_tokens',
 ]
@@ -61,9 +60,6 @@ def make_openai_payload(messages: list, settings: dict, preset: dict, stream: bo
         "messages": messages,
         "model": settings["model"],
         "max_tokens": settings["max_tokens"],
-        "max_completion_tokens": settings["max_tokens"],
-        "logit_bias": {},
-        "logprobs": False,
         "stream": stream,
     }
     # Filter preset to only include keys in OPENAI_KEYS

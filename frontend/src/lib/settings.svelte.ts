@@ -83,5 +83,15 @@ export async function load_settings() {
 }
 
 export async function save_settings() {
-  await save_json('settings.json', settings)
+  const response = await fetch('http://localhost:5000/api/save-settings', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(settings),
+  })
+
+  if (!response.ok) {
+    console.error('Failed to save settings:', response)
+  }
 }

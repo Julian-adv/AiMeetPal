@@ -2,6 +2,7 @@ import json
 import httpx
 from fastapi import HTTPException
 from fastapi.responses import StreamingResponse
+import asyncio
 
 
 async def stream_post(url: str, api_key: str, payload: dict, openai: bool = True, start_index: int = 0):
@@ -17,13 +18,14 @@ async def stream_post(url: str, api_key: str, payload: dict, openai: bool = True
                         "POST",
                         url,
                         headers={
-                            "Authorization": f"Bearer {api_key}",
+                            "Authorization": f"Bearer {api_key}"
                             "Content-Type": "application/json",
                         },
                         json=payload,
                         timeout=60.0,
                     ) as response:
                         print(f"response: {response}")
+                        print(f"response headers: {response.headers}")
                         if response.status_code != 200:
                             raise HTTPException(
                                 status_code=response.status_code,

@@ -21,9 +21,15 @@
 
   let path_entries = $state<string[]>([])
 
-  async function get_language_models() {
+  $effect(() => {
+    get_language_models(settings.api_type).then((models) => {
+      language_models = models
+    })
+  })
+
+  async function get_language_models(api_type: 'infermaticai' | 'openai') {
     try {
-      const response = await fetch('http://localhost:5000/api/models', {
+      const response = await fetch(`http://localhost:5000/api/models?api_type=${api_type}`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -98,7 +104,7 @@
       console.error('Error fetching checkpoints:', error)
     }
     try {
-      language_models = await get_language_models()
+      language_models = await get_language_models(settings.api_type)
     } catch (error) {
       console.error('Error fetching language models:', error)
     }
@@ -183,7 +189,7 @@
       </select>
     </div>
   </div>
-  <Button color="primary" class="m-3 mx-auto" onclick={() => save_settings()}>Save</Button>
+  <Button color="sky" class="m-3 mx-auto" onclick={() => save_settings()}>Save</Button>
 </div>
 
 <Modal size="lg" title="Select folder" {modalStatus} {closeModal}>

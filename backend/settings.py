@@ -84,7 +84,7 @@ async def load_settings_api():
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.post("/api/save_settings")
+@router.post("/api/save-settings")
 async def save_settings(data: dict):
     with open(get_data_path('settings.json'), "w") as f:
         json.dump(data, f, indent=2)

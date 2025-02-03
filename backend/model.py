@@ -1,5 +1,5 @@
 import httpx
-from fastapi import APIRouter
+from fastapi import APIRouter, Query, HTTPException
 from settings import load_settings
 
 router = APIRouter()
@@ -54,9 +54,10 @@ async def get_model_openai():
 
 
 @router.get("/api/models")
-async def get_model():
-    settings = load_settings()
-    if settings["api_type"] == "infermaticai":
+async def get_model(api_type: str = Query(..., description="API provider selection")):
+    if api_type == "infermaticai":
         return await get_model_infermaticai()
-    elif settings["api_type"] == "openai":
+    elif api_type == "openai":
         return await get_model_openai()
+    else:
+        raise HTTPException(status_code=400, detail="Invalid API provider")
