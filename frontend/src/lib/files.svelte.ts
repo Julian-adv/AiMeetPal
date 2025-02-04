@@ -55,6 +55,26 @@ export async function get_session_json(char_name: string, session_name: string):
   }
 }
 
+export async function load_binary(path: string): Promise<Uint8Array | null> {
+  try {
+    const response = await fetch(`http://localhost:5000/data/${path}`, {
+      cache: 'no-store',
+      headers: {
+        'Cache-Control': 'no-cache',
+        Pragma: 'no-cache',
+      },
+    })
+    if (response.ok) {
+      const buffer = await response.arrayBuffer()
+      return new Uint8Array(buffer)
+    }
+    return null
+  } catch (error) {
+    console.error('Error fetching binary file:', error)
+    return null
+  }
+}
+
 export async function load_json(path: string): Promise<any | null> {
   try {
     const response = await fetch(`http://localhost:5000/data/${path}`, {

@@ -53,11 +53,17 @@ async def get_model_openai():
         return {"success": False, "message": str(e)}
 
 
+async def get_model_googleaistudio():
+    return {"success": True, "models": ["gemini-2.0-flash-thinking-exp-01-21", "gemini-2.0-flash-exp"]}
+
+
 @router.get("/api/models")
 async def get_model(api_type: str = Query(..., description="API provider selection")):
     if api_type == "infermaticai":
         return await get_model_infermaticai()
     elif api_type == "openai":
         return await get_model_openai()
+    elif api_type == "googleaistudio":
+        return await get_model_googleaistudio()
     else:
         raise HTTPException(status_code=400, detail="Invalid API provider")

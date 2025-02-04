@@ -1,4 +1,5 @@
-import { load_json, save_json } from './files.svelte'
+import { load_json } from './files.svelte'
+import { load_risupreset } from './risu'
 
 interface InfermaticAISettings {
   api_key: string
@@ -17,10 +18,20 @@ interface OpenAISettings {
   max_tokens: number
 }
 
+interface GoogleAISettings {
+  api_key: string
+  preset: string
+  model: string
+  max_tokens: number
+}
+
+export type ApiType = 'infermaticai' | 'openai' | 'googleaistudio'
+
 interface Settings {
-  api_type: 'infermaticai' | 'openai'
+  api_type: ApiType
   infermaticai: InfermaticAISettings
   openai: OpenAISettings
+  googleaistudio: GoogleAISettings
   checkpoints_folder: string
   checkpoint_name: string
   prefix: string
@@ -41,6 +52,12 @@ export const settings: Settings = $state({
     custom_url: 'https://api.kluster.ai/v1',
     preset: 'default.json',
     model: 'deepseek-ai/DeepSeek-R1',
+    max_tokens: 1024,
+  },
+  googleaistudio: {
+    api_key: 'your api key',
+    preset: 'default.json',
+    model: 'gemini-2.0-flash-thinking-exp-01-21',
     max_tokens: 1024,
   },
   checkpoints_folder: '.',
@@ -78,6 +95,14 @@ export async function load_settings() {
     } else if (settings.api_type === 'openai') {
       const preset_json = await load_json(server_settings.openai.preset)
       preset.max_length = preset_json.openai_max_context
+    } else if (settings.api_type === 'googleaistudio') {
+      if (server_settings.googleaistudio.preset.endsWith('.risupreset')) {
+        const preset_json = await load_risupreset(server_settings.googleaistudio.preset)
+        console.log(preset_json)
+      } else {
+        const preset_json = await load_json(server_settings.googleaistudio.preset)
+        preset.max_length = preset_json.openai_max_context
+      }
     }
   }
 }

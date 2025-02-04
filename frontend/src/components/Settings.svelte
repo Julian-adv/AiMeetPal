@@ -4,6 +4,7 @@
   import { Modal, Button, Input, uiHelpers, Breadcrumb, BreadcrumbItem } from 'svelte-5-ui-lib'
   import type { Entry, DirEntries } from '../types/file'
   import { get_dir_entries, get_checkpoints } from '../lib/files.svelte'
+  import type { ApiType } from '../lib/settings.svelte'
 
   let language_models: string[] = $state([])
   let checkpoints: string[] = $state([])
@@ -27,7 +28,7 @@
     })
   })
 
-  async function get_language_models(api_type: 'infermaticai' | 'openai') {
+  async function get_language_models(api_type: ApiType) {
     try {
       const response = await fetch(`http://localhost:5000/api/models?api_type=${api_type}`, {
         method: 'GET',
@@ -119,6 +120,7 @@
       <select bind:value={settings.api_type}>
         <option value="infermaticai">Infermatic.ai</option>
         <option value="openai">OpenAI Compatible</option>
+        <option value="googleaistudio">Google AI Studio</option>
       </select>
     </div>
     {#if settings.api_type === 'infermaticai'}
@@ -173,6 +175,30 @@
         class="focus:ring-2 ring-sky-500"
         type="number"
         bind:value={settings.openai.max_tokens}
+      />
+    {/if}
+    {#if settings.api_type === 'googleaistudio'}
+      <div class="label">API key</div>
+      <Input
+        type="password"
+        class="focus:ring-2 ring-sky-500"
+        bind:value={settings.googleaistudio.api_key}
+      />
+      <div class="label">Preset</div>
+      <Input class="focus:ring-2 ring-sky-500" bind:value={settings.googleaistudio.preset} />
+      <div class="label">Language model</div>
+      <div>
+        <select bind:value={settings.googleaistudio.model}>
+          {#each language_models as model}
+            <option value={model}>{model}</option>
+          {/each}
+        </select>
+      </div>
+      <div class="label">Max tokens</div>
+      <Input
+        class="focus:ring-2 ring-sky-500"
+        type="number"
+        bind:value={settings.googleaistudio.max_tokens}
       />
     {/if}
     <div class="label">Image model folder</div>
