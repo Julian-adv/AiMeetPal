@@ -186,6 +186,8 @@
       />
       <div class="label">Preset</div>
       <Input class="focus:ring-2 ring-sky-500" bind:value={settings.googleaistudio.preset} />
+      <div class="label">Module</div>
+      <Input class="focus:ring-2 ring-sky-500" bind:value={settings.googleaistudio.module} />
       <div class="label">Language model</div>
       <div>
         <select bind:value={settings.googleaistudio.model}>

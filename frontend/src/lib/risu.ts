@@ -1,9 +1,10 @@
-import { load_binary } from './files.svelte'
+import { load_binary, save_image } from './files.svelte'
 import { decodeRPack } from './rpack/rpack_bg'
 import * as fflate from 'fflate'
 import { encode as encodeMsgpack, decode as decodeMsgpack } from 'msgpackr'
 import rfdc from 'rfdc'
 import { Buffer } from 'buffer'
+import { v4 } from 'uuid'
 
 export type FormatingOrderItem =
   | 'main'
@@ -1267,5 +1268,276 @@ export async function load_risupreset(path: string): Promise<any> {
     }
     return pre
   }
-  return {}
+  return null
+}
+
+export interface loreBook {
+  key: string
+  secondkey: string
+  insertorder: number
+  comment: string
+  content: string
+  mode: 'multiple' | 'constant' | 'normal'
+  alwaysActive: boolean
+  selective: boolean
+  extentions?: {
+    risu_case_sensitive: boolean
+  }
+  activationPercent?: number
+  loreCache?: {
+    key: string
+    data: string[]
+  }
+  useRegex?: boolean
+  bookVersion?: number
+}
+
+export type triggerConditionsVar = {
+  type: 'var' | 'value'
+  var: string
+  value: string
+  operator: '=' | '!=' | '>' | '<' | '>=' | '<=' | 'null' | 'true'
+}
+
+export type triggerConditionsExists = {
+  type: 'exists'
+  value: string
+  type2: 'strict' | 'loose' | 'regex'
+  depth: number
+}
+
+export type triggerConditionsChatIndex = {
+  type: 'chatindex'
+  value: string
+  operator: '=' | '!=' | '>' | '<' | '>=' | '<=' | 'null' | 'true'
+}
+
+export type triggerCondition =
+  | triggerConditionsVar
+  | triggerConditionsExists
+  | triggerConditionsChatIndex
+
+export type triggerCode = {
+  type: 'triggercode' | 'triggerlua'
+  code: string
+}
+
+export interface triggerEffectCutChat {
+  type: 'cutchat'
+  start: string
+  end: string
+}
+
+export interface triggerEffectModifyChat {
+  type: 'modifychat'
+  index: string
+  value: string
+}
+
+export interface triggerEffectImgGen {
+  type: 'runImgGen'
+  value: string
+  negValue: string
+  inputVar: string
+}
+
+export interface triggerEffectRegex {
+  type: 'extractRegex'
+  value: string
+  regex: string
+  flags: string
+  result: string
+  inputVar: string
+}
+
+export interface triggerEffectRunLLM {
+  type: 'runLLM'
+  value: string
+  inputVar: string
+}
+
+export interface triggerEffectCheckSimilarity {
+  type: 'checkSimilarity'
+  source: string
+  value: string
+  inputVar: string
+}
+
+export interface triggerEffectSendAIprompt {
+  type: 'sendAIprompt'
+}
+
+export interface triggerEffectShowAlert {
+  type: 'showAlert'
+  alertType: string
+  value: string
+  inputVar: string
+}
+
+export interface triggerEffectSetvar {
+  type: 'setvar'
+  operator: '=' | '+=' | '-=' | '*=' | '/='
+  var: string
+  value: string
+}
+
+export interface triggerEffectSystemPrompt {
+  type: 'systemprompt'
+  location: 'start' | 'historyend' | 'promptend'
+  value: string
+}
+
+export interface triggerEffectImpersonate {
+  type: 'impersonate'
+  role: 'user' | 'char'
+  value: string
+}
+
+export interface triggerEffectCommand {
+  type: 'command'
+  value: string
+}
+
+export interface triggerEffectStop {
+  type: 'stop'
+}
+
+export interface triggerEffectRunTrigger {
+  type: 'runtrigger'
+  value: string
+}
+
+export type triggerEffect =
+  | triggerCode
+  | triggerEffectCutChat
+  | triggerEffectModifyChat
+  | triggerEffectImgGen
+  | triggerEffectRegex
+  | triggerEffectRunLLM
+  | triggerEffectCheckSimilarity
+  | triggerEffectSendAIprompt
+  | triggerEffectShowAlert
+  | triggerEffectSetvar
+  | triggerEffectSystemPrompt
+  | triggerEffectImpersonate
+  | triggerEffectCommand
+  | triggerEffectStop
+  | triggerEffectRunTrigger
+
+export interface triggerscriptMain {
+  comment: string
+  type: 'start' | 'manual' | 'output' | 'input'
+  conditions: triggerCondition[]
+  effect: triggerEffect[]
+  lowLevelAccess?: boolean
+}
+
+export type triggerscript = triggerscriptMain
+
+export interface RisuModule {
+  name: string
+  description: string
+  lorebook?: loreBook[]
+  regex?: customscript[]
+  cjs?: string
+  trigger?: triggerscript[]
+  id: string
+  lowLevelAccess?: boolean
+  hideIcon?: boolean
+  backgroundEmbedding?: string
+  assets?: [string, string, string][]
+  namespace?: string
+}
+
+export async function hasher(data: Uint8Array) {
+  return Buffer.from(await crypto.subtle.digest('SHA-256', data)).toString('hex')
+}
+
+export async function saveAsset(data: Uint8Array, customId: string = '', fileName: string = '') {
+  const dir = 'assets'
+  let new_file_name = fileName
+  if (fileName == '' && customId == '') {
+    new_file_name = await hasher(data)
+  } else {
+    new_file_name = `${customId}_${fileName}`
+  }
+  if (!new_file_name.endsWith('.png')) {
+    new_file_name += '.png'
+  }
+  return await save_image(dir, new_file_name, data)
+}
+
+export async function readModule(buf: Buffer): Promise<RisuModule | null> {
+  let pos = 0
+
+  const readLength = () => {
+    const len = buf.readUInt32LE(pos)
+    pos += 4
+    return len
+  }
+  const readByte = () => {
+    const byte = buf.readUInt8(pos)
+    pos += 1
+    return byte
+  }
+  const readData = (len: number) => {
+    const data = buf.subarray(pos, pos + len)
+    pos += len
+    return data
+  }
+
+  if (readByte() !== 111) {
+    console.error('Invalid magic number')
+    return null
+  }
+  if (readByte() !== 0) {
+    //Version check
+    console.error('Invalid version')
+    return null
+  }
+
+  const mainLen = readLength()
+  const mainData = readData(mainLen)
+  const main: {
+    type: 'risuModule'
+    module: RisuModule
+  } = JSON.parse(Buffer.from(await decodeRPack(mainData)).toString())
+
+  if (main.type !== 'risuModule') {
+    console.error('Invalid module type')
+    return null
+  }
+
+  let module = main.module
+
+  let i = 0
+  while (true) {
+    const mark = readByte()
+    if (mark === 0) {
+      break
+    }
+    if (mark !== 1) {
+      console.error('Invalid data')
+      return null
+    }
+    const len = readLength()
+    const data = readData(len)
+    if (module.assets !== undefined) {
+      module.assets[i][1] = await saveAsset(Buffer.from(await decodeRPack(data)))
+    }
+    i++
+  }
+
+  module.id = v4()
+  return module
+}
+
+export async function load_risumodule(path: string): Promise<any> {
+  if (!path.endsWith('.risum')) return null
+  let data = await load_binary(path)
+  if (!data) return null
+
+  const buf = Buffer.from(data)
+  const module = await readModule(buf)
+  return module
 }

@@ -1,5 +1,5 @@
 import { load_json } from './files.svelte'
-import { load_risupreset } from './risu'
+import { load_risumodule, load_risupreset } from './risu'
 
 interface InfermaticAISettings {
   api_key: string
@@ -21,6 +21,7 @@ interface OpenAISettings {
 interface GoogleAISettings {
   api_key: string
   preset: string
+  module: string
   model: string
   max_tokens: number
 }
@@ -57,6 +58,7 @@ export const settings: Settings = $state({
   googleaistudio: {
     api_key: 'your api key',
     preset: 'default.json',
+    module: 'module.json',
     model: 'gemini-2.0-flash-thinking-exp-01-21',
     max_tokens: 1024,
   },
@@ -99,6 +101,8 @@ export async function load_settings() {
       if (server_settings.googleaistudio.preset.endsWith('.risupreset')) {
         const preset_json = await load_risupreset(server_settings.googleaistudio.preset)
         console.log(preset_json)
+        const module_json = await load_risumodule(server_settings.googleaistudio.module)
+        console.log(module_json)
       } else {
         const preset_json = await load_json(server_settings.googleaistudio.preset)
         preset.max_length = preset_json.openai_max_context

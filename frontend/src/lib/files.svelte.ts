@@ -120,6 +120,51 @@ export async function save_json(path: string, json_data: any): Promise<boolean> 
   }
 }
 
+export async function save_image(dir: string, image_name: string, image: Uint8Array | string) {
+  if (typeof image === 'string' && image.startsWith('data:image/png;base64,')) {
+    // image exists but not saved yet
+    try {
+      const response = await fetch('http://localhost:5000/api/save-image', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          path: `${dir}/${image_name}.png`,
+          image: image,
+        }),
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        return `http://localhost:5000/data/${data.path}` // Clear the base64 image data after saving
+      }
+    } catch (error) {
+      console.error('Error saving image:', error)
+    }
+  } else {
+    try {
+      const response = await fetch('http://localhost:5000/api/save-binary', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          path: `${dir}/${image_name}.png`,
+          image: image,
+        }),
+      })
+      if (response.ok) {
+        const data = await response.json()
+        return `http://localhost:5000/data/${data.path}`
+      }
+    } catch (error) {
+      console.error('Error saving image binary:', error)
+    }
+  }
+  return ''
+}
+
 export async function save_image_story_entry(
   dir: string,
   image_name: string,
