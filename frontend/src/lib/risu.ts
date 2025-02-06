@@ -1,3 +1,7 @@
+//
+// These codes are copied from https://github.com/kwaroran/RisuAI
+//
+
 import { load_binary, save_image } from './files.svelte'
 import { decodeRPack } from './rpack/rpack_bg'
 import * as fflate from 'fflate'

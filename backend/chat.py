@@ -2,6 +2,7 @@ from fastapi import APIRouter
 from settings import load_settings
 from chat_infermaticai import chat_infermaticai
 from chat_openai import chat_openai
+from chat_googleaistudio import chat_googleaistudio
 from chat_common import ChatMessage
 
 router = APIRouter()
@@ -14,3 +15,5 @@ async def chat(message: ChatMessage):
         return await chat_infermaticai(message)
     elif settings["api_type"] == "openai":
         return await chat_openai(message)
+    elif settings["api_type"] == "googleaistudio":
+        return await chat_googleaistudio(message)

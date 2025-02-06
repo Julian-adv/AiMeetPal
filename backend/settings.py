@@ -14,7 +14,7 @@ def load_settings(reload=False):
     global settings
     if settings is None or reload:
         try:
-            with open(get_data_path('settings.json'), "r") as f:
+            with open(get_data_path("settings.json"), "r") as f:
                 settings = json.load(f)
         except FileNotFoundError:
             settings = {}
@@ -24,10 +24,12 @@ def load_settings(reload=False):
 
 def load_api_settings():
     settings = load_settings()
-    if settings['api_type'] == 'infermaticai':
-        return settings['infermaticai']
-    elif settings['api_type'] == 'openai':
-        return settings['openai']
+    if settings["api_type"] == "infermaticai":
+        return settings["infermaticai"]
+    elif settings["api_type"] == "openai":
+        return settings["openai"]
+    elif settings["api_type"] == "googleaistudio":
+        return settings["googleaistudio"]
 
 
 def load_api_settings_for(api: str) -> dict:
@@ -37,27 +39,29 @@ def load_api_settings_for(api: str) -> dict:
 
 def load_preset():
     settings = load_settings()
-    if settings['api_type'] == 'infermaticai':
-        path = get_data_path(settings['infermaticai']['preset'])
-    elif settings['api_type'] == 'openai':
-        path = get_data_path(settings['openai']['preset'])
+    if settings["api_type"] == "infermaticai":
+        path = get_data_path(settings["infermaticai"]["preset"])
+    elif settings["api_type"] == "openai":
+        path = get_data_path(settings["openai"]["preset"])
+    elif settings["api_type"] == "googleaistudio":
+        path = get_data_path(settings["googleaistudio"]["preset"])
     with open(path, "r") as f:
         return json.load(f)
 
 
 def load_preset_for(api: str) -> dict:
-    if api == 'infermaticai':
-        path = get_data_path(settings['infermaticai']['preset'])
-    elif api == 'openai':
-        path = get_data_path(settings['openai']['preset'])
+    if api == "infermaticai":
+        path = get_data_path(settings["infermaticai"]["preset"])
+    elif api == "openai":
+        path = get_data_path(settings["openai"]["preset"])
     with open(path, "r") as f:
         return json.load(f)
 
 
 def load_instruct():
     settings = load_settings()
-    if settings['api_type'] == 'infermaticai':
-        path = get_data_path(settings['infermaticai']['instruct'])
+    if settings["api_type"] == "infermaticai":
+        path = get_data_path(settings["infermaticai"]["instruct"])
         with open(path, "r") as f:
             return json.load(f)
     return {}
@@ -65,8 +69,8 @@ def load_instruct():
 
 def load_context():
     settings = load_settings()
-    if settings['api_type'] == 'infermaticai':
-        path = get_data_path(settings['infermaticai']['context'])
+    if settings["api_type"] == "infermaticai":
+        path = get_data_path(settings["infermaticai"]["context"])
         with open(path, "r") as f:
             return json.load(f)
     return {}
@@ -86,7 +90,7 @@ async def load_settings_api():
 
 @router.post("/api/save-settings")
 async def save_settings(data: dict):
-    with open(get_data_path('settings.json'), "w") as f:
+    with open(get_data_path("settings.json"), "w") as f:
         json.dump(data, f, indent=2)
     load_settings(reload=True)
     return {"success": True}

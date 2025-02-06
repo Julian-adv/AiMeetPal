@@ -1,4 +1,4 @@
-import { load_json } from './files.svelte'
+import { load_json, save_json } from './files.svelte'
 import { load_risumodule, load_risupreset } from './risu'
 
 interface InfermaticAISettings {
@@ -100,9 +100,15 @@ export async function load_settings() {
     } else if (settings.api_type === 'googleaistudio') {
       if (server_settings.googleaistudio.preset.endsWith('.risupreset')) {
         const preset_json = await load_risupreset(server_settings.googleaistudio.preset)
-        console.log(preset_json)
+        if (preset_json) {
+          const path = server_settings.googleaistudio.preset.replace('.risupreset', '.json')
+          await save_json(path, preset_json)
+        }
         const module_json = await load_risumodule(server_settings.googleaistudio.module)
-        console.log(module_json)
+        if (module_json) {
+          const path = server_settings.googleaistudio.module.replace('.risum', '.json')
+          await save_json(path, module_json)
+        }
       } else {
         const preset_json = await load_json(server_settings.googleaistudio.preset)
         preset.max_length = preset_json.openai_max_context
