@@ -3,6 +3,7 @@ from pydantic import BaseModel
 from typing import List
 import os
 import win32api
+from send2trash import send2trash
 
 router = APIRouter()
 
@@ -54,9 +55,7 @@ async def get_files(cur_dir: CurrentDirectory):
 
     try:
         entries = os.listdir(path)
-        entries = [
-            Entry(name=entry, is_dir=os.path.isdir(os.path.join(path, entry))) for entry in entries
-        ]
+        entries = [Entry(name=entry, is_dir=os.path.isdir(os.path.join(path, entry))) for entry in entries]
         entries.sort(key=lambda x: (not x.is_dir, x.name.lower()))
         return Entries(entries=entries, current_directory=path)
     except Exception as e:
@@ -141,6 +140,29 @@ async def save_binary(data: SaveBinary):
         # Save binary data
         with open(full_path, "wb") as f:
             f.write(data.binary)
+
+        return {"status": "success", "path": data.path}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+class DeleteFile(BaseModel):
+    path: str
+
+
+@router.post("/api/delete-file")
+async def delete_file(data: DeleteFile):
+    # Ensure the path is under /data directory
+    base_path = os.path.normpath(os.path.join(os.path.dirname(__file__), "..", "data"))
+    full_path = os.path.normpath(os.path.join(base_path, data.path.lstrip("/")))
+
+    # Security check - ensure the path is under /data directory
+    if not os.path.commonpath([base_path]) == os.path.commonpath([base_path, full_path]):
+        raise HTTPException(status_code=400, detail="Invalid path - must be under /data directory")
+
+    try:
+        # Move the file to recycle bin instead of deleting
+        send2trash(full_path)
 
         return {"status": "success", "path": data.path}
     except Exception as e:

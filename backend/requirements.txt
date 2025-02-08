@@ -16,3 +16,4 @@ spandrel==0.4.0
 pybars3==0.9.7
 pypng==0.20220715.0
 pywin32==308
+send2trash==1.8.3

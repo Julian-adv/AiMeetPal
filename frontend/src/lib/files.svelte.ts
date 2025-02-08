@@ -198,3 +198,23 @@ export async function save_image_story_entry(
 
   return entry
 }
+
+export async function delete_file(path: string): Promise<boolean> {
+  try {
+    const response = await fetch('http://localhost:5000/api/delete-file', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ path: path }),
+    })
+
+    if (response.ok) {
+      return true
+    }
+  } catch (error) {
+    console.error('Error deleting file:', error)
+  }
+
+  return false
+}

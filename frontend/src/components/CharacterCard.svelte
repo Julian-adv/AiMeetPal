@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { ChatBubbleLeftRight, PencilSquare } from 'svelte-heros-v2'
+  import { ChatBubbleLeftRight, PencilSquare, Trash } from 'svelte-heros-v2'
   import { Button } from 'svelte-5-ui-lib'
   import type { Character } from '../types/character'
 
@@ -9,9 +9,9 @@
     character: Character
     chat: () => void
     edit_char: () => void
-    index: number
+    delete_char: () => void
   }
-  let { selected, onclick, character, chat, edit_char, index }: Prop = $props()
+  let { selected, onclick, character, chat, edit_char, delete_char }: Prop = $props()
   let hover = $state(false)
 
   function removeHtmlTags(str: string): string {
@@ -56,6 +56,9 @@
         >
         <Button class="text-zinc-500 p-2" color="light" size="sm" onclick={edit_char}
           ><PencilSquare size="24" /></Button
+        >
+        <Button class="text-zinc-500 p-2" color="light" size="sm" onclick={delete_char}
+          ><Trash size="24" /></Button
         >
       </div>
     {/if}
