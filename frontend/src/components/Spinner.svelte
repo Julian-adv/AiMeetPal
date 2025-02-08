@@ -8,6 +8,7 @@
 
   let angle_timer: number | undefined = undefined
   let angle = $state(0)
+  let border_width = $derived(size < 16 ? 2 : 4)
 
   $effect(() => {
     tick
@@ -40,12 +41,12 @@
 
 <div
   class="spinner_square {angle === 0 ? 'glow' : ''}"
-  style="transform: rotate({angle}deg); width: {size}px; height: {size}px;"
+  style="transform: rotate({angle}deg); width: {size}px; height: {size}px; --b-width: {border_width}px;"
 ></div>
 
 <style>
   .spinner_square {
-    border: 4px solid #bfc9eb;
+    border: var(--b-width) solid #bfc9eb;
     border-radius: 2px;
     transition: transform 1s linear;
   }

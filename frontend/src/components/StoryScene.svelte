@@ -158,22 +158,24 @@
       show_thinking = true
       thinking = false
       thinking_content = match_content
-      return rest
+      rest_content = rest
+      return
     } else {
       const { matched, match_content, rest } = match_and_rest(thinking_regex, content)
       if (matched) {
         show_thinking = true
         thinking = true
         thinking_content = match_content
-        return rest
+        rest_content = rest
+        return
       }
     }
     show_thinking = false
-    return content
+    rest_content = content
   }
 
   $effect(() => {
-    rest_content = process_thinking(highlightQuotes(entry.content))
+    process_thinking(highlightQuotes(entry.content))
   })
 
   onMount(() => {})

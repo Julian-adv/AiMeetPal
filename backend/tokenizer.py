@@ -17,9 +17,7 @@ _tokenizer = None
 def get_tokenizer():
     global _tokenizer
     if _tokenizer is None:
-        _tokenizer = transformers.AutoTokenizer.from_pretrained(
-            chat_tokenizer_dir, trust_remote_code=True
-        )
+        _tokenizer = transformers.AutoTokenizer.from_pretrained(chat_tokenizer_dir, trust_remote_code=True)
     return _tokenizer
 
 
@@ -68,7 +66,7 @@ async def count_tokens_infermaticai(message: TokenMessage):
         return {"success": False, "message": str(e)}
 
 
-async def count_tokens_deepseek(message: TokenMessage):
+async def count_tokens_openai(message: TokenMessage):
     try:
         tokenizer = get_tokenizer()
         if message.system_prompt:
@@ -86,7 +84,40 @@ async def count_tokens_deepseek(message: TokenMessage):
                 persona,
                 [],
                 0,
-                preset
+                preset,
+            )
+            total_tokens = 0
+            for msg in messages:
+                tokens = tokenizer.encode(msg["content"])
+                total_tokens += len(tokens)
+        else:
+            tokens = tokenizer.encode(message.entry.content)
+            total_tokens = len(tokens)
+        return {"success": True, "total_tokens": total_tokens}
+    except Exception as e:
+        print(f"Error counting tokens: {e}")
+        return {"success": False, "message": str(e)}
+
+
+async def count_tokens_googleaistudio(message: TokenMessage):
+    try:
+        tokenizer = get_tokenizer()
+        if message.system_prompt:
+            preset = load_preset()
+            persona = "Julien is living alone in a luxury mansion."
+            messages = make_openai_prompt(
+                "Julien",
+                message.info.name,
+                "",
+                message.info.description,
+                message.info.personality,
+                message.info.scenario,
+                message.info.mes_example,
+                "",
+                persona,
+                [],
+                0,
+                preset,
             )
             total_tokens = 0
             for msg in messages:
@@ -107,4 +138,6 @@ async def count_tokens(message: TokenMessage):
     if settings["api_type"] == "infermaticai":
         return await count_tokens_infermaticai(message)
     elif settings["api_type"] == "openai":
-        return await count_tokens_deepseek(message)
+        return await count_tokens_openai(message)
+    elif settings["api_type"] == "googleaistudio":
+        return await count_tokens_googleaistudio(message)

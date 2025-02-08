@@ -2,11 +2,16 @@ import json
 import httpx
 from fastapi import HTTPException
 from fastapi.responses import StreamingResponse
-import html
+from html import unescape
 
 
 def unescape_text(text: str) -> str:
-    return text.replace("\\n", "\n").replace("\\u003c", "<").replace("\\u003e", ">")
+    try:
+        # Handle JSON unicode escape sequences
+        text = json.loads(text)
+    except json.JSONDecodeError:
+        pass  # If not valid JSON string, keep original
+    return unescape(text.replace("\\n", "\n"))
 
 
 async def stream_post(url: str, api_key: str | None, payload: dict, openai: bool = True, start_index: int = 0):
@@ -70,11 +75,8 @@ async def stream_post(url: str, api_key: str | None, payload: dict, openai: bool
                                         text = line.split('"text": ')[1].strip()
                                         if text.endswith(","):
                                             text = text[:-1]
-                                        if text.startswith('"') and text.endswith('"'):
-                                            text = text[1:-1]
-                                        if text:
-                                            text = unescape_text(text)
-                                            yield f"data: {json.dumps({'text': text})}\n\n"
+                                        text = unescape_text(text)
+                                        yield f"data: {json.dumps({'text': text})}\n\n"
                                     elif line == "]":
                                         yield f"data: {json.dumps({'start_index': start_index})}\n\n"
                                         break

@@ -12,22 +12,30 @@
 
   $effect(() => {
     content
-    tick += 1
+    setTimeout(() => {
+      tick = tick + 1
+    }, 0)
   })
+
+  function toggle_collapse() {
+    collapsed = !collapsed
+  }
 </script>
 
-<div class="think ${collapsed ? 'collapsed' : ''} ${thinking ? 'thinking' : ''}">
-  <button class="think-toggle">▼</button>
+<div class="think {collapsed ? 'collapsed' : ''} {thinking ? 'thinking' : ''}">
+  <button class="think-toggle" onclick={toggle_collapse}>▼</button>
   <div class="spinner">
-    ${thinking ? 'thinking' : 'thought'}
-    <Spinner {tick} {size} />
+    {thinking ? 'thinking' : 'thought'}
+    {#if thinking}
+      <Spinner {tick} {size} />
+    {/if}
   </div>
   <span class="think-content">{content}</span>
 </div>
 
 <style>
   .think {
-    color: var(--colors-gray-400);
+    color: var(--color-gray-400);
   }
 
   .think-toggle {
@@ -45,7 +53,7 @@
     display: none;
   }
 
-  .think :global .collapsed .spinner {
+  .think.collapsed .spinner {
     display: inline-flex;
     align-items: center;
     gap: 0.25rem;
@@ -53,17 +61,11 @@
     margin-left: 0.5rem;
   }
 
-  .think :global .collapsed .think-content {
+  .think.collapsed .think-content {
     display: none;
   }
 
-  .think :global .collapsed .think-toggle {
+  .think.collapsed .think-toggle {
     transform: rotate(-90deg);
-  }
-
-  .think :global .collapsed .spinner .spinner-square {
-    display: none;
-    transform-origin: center;
-    transition: transform 0.4s ease-in-out;
   }
 </style>
