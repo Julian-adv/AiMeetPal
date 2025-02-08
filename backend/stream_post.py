@@ -40,7 +40,7 @@ async def stream_post(url: str, api_key: str | None, payload: dict, openai: bool
                         timeout=60.0,
                     ) as response:
                         print(f"response: {response}")
-                        print(f"response headers: {response.headers}")
+                        # print(f"response headers: {response.headers}")
                         if response.status_code != 200:
                             raise HTTPException(
                                 status_code=response.status_code,

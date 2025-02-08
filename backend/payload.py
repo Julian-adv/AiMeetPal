@@ -85,14 +85,12 @@ def make_openai_payload(messages: list, settings: dict, preset: dict, stream: bo
 
 
 def make_googleaistudio_payload(payload: dict, settings: dict, preset: dict, stream: bool = True) -> dict:
-    # Update existing generationConfig with our settings
-    payload.setdefault("generationConfig", {})
-    payload["generationConfig"].update({
+    payload["generationConfig"] = {
         "candidateCount": 1,
         "maxOutputTokens": settings["max_tokens"],
         "temperature": preset["temperature"],
         "topP": preset["top_p"],
-    })
+    }
 
     # Add safety settings
     payload["safetySettings"] = [

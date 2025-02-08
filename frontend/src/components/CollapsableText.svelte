@@ -30,7 +30,7 @@
       <Spinner {tick} {size} />
     {/if}
   </div>
-  <span class="think-content">{content}</span>
+  <span class="think-content">{@html content}</span>
 </div>
 
 <style>
