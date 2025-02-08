@@ -1,3 +1,4 @@
+import json
 from chat_common import ChatMessage, find_start_index
 from settings import load_api_settings, load_preset
 from prompt_googleai import make_googleaistudio_prompt
@@ -15,11 +16,11 @@ async def chat_googleaistudio(message: ChatMessage):
     start_index = find_start_index(
         message.system_token_count,
         message.entries,
-        preset["maxContext"] - settings["max_tokens"],
+        preset["openai_max_context"] - settings["max_tokens"],
         user,
     )
     print(f"start_index: {start_index}")
-    messages = make_googleaistudio_prompt(
+    payload = make_googleaistudio_prompt(
         user,
         message.info.name,
         wiBefore,
@@ -33,10 +34,13 @@ async def chat_googleaistudio(message: ChatMessage):
         start_index,
         preset,
     )
-    payload = make_googleaistudio_payload(messages, settings, preset)
+    payload = make_googleaistudio_payload(payload, settings, preset)
+    print(json.dumps(payload, indent=2))
+    api_key = settings["api_key"]
     return await stream_post(
-        settings["custom_url"] + "/chat/completions",
-        settings["api_key"],
+        f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-thinking-exp-01-21:streamGenerateContent?key={api_key}",
+        None,
         payload,
+        openai=False,
         start_index=start_index,
     )

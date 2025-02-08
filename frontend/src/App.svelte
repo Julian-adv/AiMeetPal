@@ -4,6 +4,7 @@
   import EditChar from './components/EditChar.svelte'
   import Checkpoints from './components/Checkpoints.svelte'
   import Settings from './components/Settings.svelte'
+  import EditPreset from './components/EditPreset.svelte'
   import Tabs from './components/Tabs.svelte'
   import {
     Users,
@@ -11,6 +12,7 @@
     WrenchScrewdriver,
     UserPlus,
     Squares2x2,
+    AdjustmentsHorizontal,
   } from 'svelte-heros-v2'
   import { g_state } from './lib/state.svelte'
 
@@ -20,6 +22,7 @@
     { label: 'Edit char', icon: UserPlus, value: 3, component: EditChar },
     { label: 'Checkpoints', icon: Squares2x2, value: 4, component: Checkpoints },
     { label: 'Settings', icon: WrenchScrewdriver, value: 5, component: Settings },
+    { label: 'Preset', icon: AdjustmentsHorizontal, value: 6, component: EditPreset },
   ]
   let prompt = ''
   let loading = false

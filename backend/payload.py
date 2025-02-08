@@ -84,15 +84,23 @@ def make_openai_payload(messages: list, settings: dict, preset: dict, stream: bo
     return filtered_preset
 
 
-def make_googleaistudio_payload(messages: list, settings: dict, preset: dict, stream: bool = True) -> dict:
-    payload = {
-        **preset,
-        "messages": messages,
-        "model": settings["model"],
-        "max_tokens": settings["max_tokens"],
-        "stream": stream,
-    }
-    # Filter preset to only include keys in OPENAI_KEYS
-    filtered_preset = {k: v for k, v in payload.items() if k in GOOGLEAI_STUDIO_KEYS}
+def make_googleaistudio_payload(payload: dict, settings: dict, preset: dict, stream: bool = True) -> dict:
+    # Update existing generationConfig with our settings
+    payload.setdefault("generationConfig", {})
+    payload["generationConfig"].update({
+        "candidateCount": 1,
+        "maxOutputTokens": settings["max_tokens"],
+        "temperature": preset["temperature"],
+        "topP": preset["top_p"],
+    })
 
-    return filtered_preset
+    # Add safety settings
+    payload["safetySettings"] = [
+        {"category": "HARM_CATEGORY_HARASSMENT", "threshold": "BLOCK_NONE"},
+        {"category": "HARM_CATEGORY_HATE_SPEECH", "threshold": "BLOCK_NONE"},
+        {"category": "HARM_CATEGORY_SEXUALLY_EXPLICIT", "threshold": "BLOCK_NONE"},
+        {"category": "HARM_CATEGORY_DANGEROUS_CONTENT", "threshold": "BLOCK_NONE"},
+        {"category": "HARM_CATEGORY_CIVIC_INTEGRITY", "threshold": "BLOCK_NONE"},
+    ]
+
+    return payload

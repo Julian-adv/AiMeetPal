@@ -99,16 +99,19 @@ export async function load_settings() {
       preset.max_length = preset_json.openai_max_context
     } else if (settings.api_type === 'googleaistudio') {
       if (server_settings.googleaistudio.preset.endsWith('.risupreset')) {
-        const preset_json = await load_risupreset(server_settings.googleaistudio.preset)
-        if (preset_json) {
-          const path = server_settings.googleaistudio.preset.replace('.risupreset', '.json')
-          await save_json(path, preset_json)
-        }
-        const module_json = await load_risumodule(server_settings.googleaistudio.module)
-        if (module_json) {
-          const path = server_settings.googleaistudio.module.replace('.risum', '.json')
-          await save_json(path, module_json)
-        }
+        // const preset = await load_risupreset(server_settings.googleaistudio.preset)
+        // if (preset) {
+        //   preset.temperature = preset.temperature / 100
+        //   const path = server_settings.googleaistudio.preset.replace('.risupreset', '.json')
+        //   await save_json(path, preset)
+        //   updateObject(settings.googleaistudio.preset, preset)
+        // }
+        // const module = await load_risumodule(server_settings.googleaistudio.module)
+        // if (module) {
+        //   const path = server_settings.googleaistudio.module.replace('.risum', '.json')
+        //   await save_json(path, module)
+        //   updateObject(settings.googleaistudio.module, module)
+        // }
       } else {
         const preset_json = await load_json(server_settings.googleaistudio.preset)
         preset.max_length = preset_json.openai_max_context
