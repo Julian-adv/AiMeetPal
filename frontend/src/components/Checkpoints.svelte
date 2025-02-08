@@ -13,6 +13,7 @@
   import { Button, Label } from 'svelte-5-ui-lib'
   import { load_settings, save_settings, settings } from '../lib/settings.svelte'
   import DropdownButton from './DropdownButton.svelte'
+  import { Trash } from 'svelte-heros-v2'
 
   interface Checkpoint {
     name: string
@@ -124,6 +125,9 @@
         ]
       }
     }
+
+    // Remove checkpoints that don't exist in new checkpoints array
+    checkpoints = checkpoints.filter((c) => newCheckpoints.includes(c.name))
   }
 
   async function load_compare() {
@@ -171,6 +175,18 @@
     }
   }
 
+  function delete_prompt() {
+    let prompt_index = prompt_dropdown_options.indexOf(prompt)
+    if (prompt_index === -1) return
+
+    prompt_dropdown_options = prompt_dropdown_options.filter((p) => p !== prompt)
+    if (prompt_index < prompt_dropdown_options.length) {
+      prompt = prompt_dropdown_options[prompt_index]
+    } else {
+      prompt = prompt_dropdown_options[prompt_dropdown_options.length - 1]
+    }
+  }
+
   onMount(async () => {
     await load_settings()
     await refresh_checkpoints()
@@ -189,6 +205,7 @@
   <div class="flex gap-2 w-full px-2 relative items-start">
     <FlexibleTextarea id="prompt" bind:value={prompt} />
     <DropdownButton bind:value={prompt} options={prompt_dropdown_options} />
+    <Button color="light" class="p-1" onclick={delete_prompt}><Trash size="20" /></Button>
   </div>
   <div class="flex flex-row gap-1 p-2">
     <Button color="primary" onclick={start_generate_image}>Generate all</Button>
