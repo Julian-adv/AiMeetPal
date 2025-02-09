@@ -16,7 +16,6 @@
     "@tsconfig/svelte": "^5.0.4",
     "@types/node": "^22.10.5",
     "autoprefixer": "^10.4.17",
-    "flowbite-svelte-icons": "^2.0.2",
     "handlebars": "^4.7.8",
     "prettier": "^3.4.2",
     "prettier-plugin-svelte": "^3.3.2",

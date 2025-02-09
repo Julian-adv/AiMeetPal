@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { Input } from 'svelte-5-ui-lib'
+  import { Input, Button } from 'svelte-5-ui-lib'
   import { onMount } from 'svelte'
   import { load_settings, settings } from '../lib/settings.svelte'
 
@@ -16,7 +16,8 @@
 </script>
 
 <h2>Edit Preset</h2>
-<div class="grid grid-cols-[9rem_1fr] gap-2 items-center">
+<Button color="primary" class="p-2">Import</Button>
+<div class="grid grid-cols-[9rem_1fr] gap-2 items-center mt-2">
   <div class="text-right">Preset name</div>
   <div>
     <Input type="text" bind:value={preset.name} />
