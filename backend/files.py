@@ -167,3 +167,9 @@ async def delete_file(data: DeleteFile):
         return {"status": "success", "path": data.path}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/api/data-dir")
+async def get_data_dir():
+    data_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "data"))
+    return {"data_dir": data_dir}

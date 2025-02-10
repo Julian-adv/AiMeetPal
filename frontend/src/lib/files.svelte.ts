@@ -218,3 +218,17 @@ export async function delete_file(path: string): Promise<boolean> {
 
   return false
 }
+
+export async function get_data_dir(): Promise<string | null> {
+  try {
+    const response = await fetch('http://localhost:5000/api/data-dir')
+    if (response.ok) {
+      const data = await response.json()
+      return data.data_dir
+    }
+    return null
+  } catch (error) {
+    console.error('Error getting data directory:', error)
+    return null
+  }
+}

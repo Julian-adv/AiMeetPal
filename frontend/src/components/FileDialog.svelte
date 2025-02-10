@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { get_dir_entries } from '../lib/files.svelte'
+  import { get_dir_entries, get_data_dir } from '../lib/files.svelte'
   import type { DirEntries, Entry } from '@/types/file'
   import { onMount } from 'svelte'
   import { Breadcrumb, BreadcrumbItem, Button, Input, Modal, uiHelpers } from 'svelte-5-ui-lib'
@@ -37,6 +37,7 @@
   })
   let path_entries: string[] = $state([])
   let selected_file = $state('')
+  let data_dir: string | null = null
 
   function dir_to_path_entries(path: string) {
     const entries = path.split(/[\/\\]/)
@@ -78,11 +79,17 @@
       on_ok(dir_entries.current_directory)
     } else if (selected_file) {
       file_dialog.close()
-      on_ok(dir_entries.current_directory + '/' + selected_file)
+      const fullPath = dir_entries.current_directory + '/' + selected_file
+      if (data_dir && fullPath.startsWith(data_dir)) {
+        on_ok(fullPath.substring(data_dir.length + 1))
+      } else {
+        on_ok(fullPath)
+      }
     }
   }
 
   onMount(async () => {
+    data_dir = await get_data_dir()
     on_init(file_dialog)
     dir_entries.current_directory = init_dir
     try {

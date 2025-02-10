@@ -1261,8 +1261,8 @@ export async function load_risupreset(path: string): Promise<any> {
   if (path.endsWith('.risup')) {
     data = await decodeRPack(data)
   }
+  if (!data) return null
   const decoded = await decodeMsgpack(fflate.decompressSync(data))
-  console.log(decoded)
   if ((decoded.presetVersion === 0 || decoded.presetVersion === 2) && decoded.type === 'preset') {
     const pre = {
       ...presetTemplate,
