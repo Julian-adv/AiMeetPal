@@ -113,8 +113,14 @@ export async function load_settings() {
         //   updateObject(settings.googleaistudio.module, module)
         // }
       } else {
-        const preset_json = await load_json(server_settings.googleaistudio.preset)
-        preset.max_length = preset_json.openai_max_context
+        const preset_json = await load_json('presets/' + server_settings.googleaistudio.preset)
+        if (preset_json) {
+          if (preset_json.openai_max_context) {
+            preset.max_length = preset_json.openai_max_context
+          } else if (preset_json.maxContext) {
+            preset.max_length = preset_json.maxContext
+          }
+        }
       }
     }
   }

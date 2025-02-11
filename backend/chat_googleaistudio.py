@@ -16,7 +16,7 @@ async def chat_googleaistudio(message: ChatMessage):
     start_index = find_start_index(
         message.system_token_count,
         message.entries,
-        preset["openai_max_context"] - settings["max_tokens"],
+        preset["maxContext"] - settings["max_tokens"],
         user,
     )
     print(f"start_index: {start_index}")

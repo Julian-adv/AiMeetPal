@@ -90,6 +90,8 @@ def make_googleaistudio_payload(payload: dict, settings: dict, preset: dict, str
         "maxOutputTokens": settings["max_tokens"],
         "temperature": preset["temperature"],
         "topP": preset["top_p"],
+        "presencePenalty": preset["PresensePenalty"],
+        "frequencyPenalty": preset["frequencyPenalty"],
     }
 
     # Add safety settings

@@ -129,7 +129,7 @@ async def scene_to_prompt_googleaistudio(scene: SceneContent):
                                 + scene.prev_image_prompt
                                 + "\n"
                                 + "\n"
-                                + "Update the character's appearance and environment above based on the following scene description:\n"
+                                + "Update the character's appearance and environment above based on the following scene description (write the output in English only):\n"
                                 + scene.content
                             )
                         }
@@ -152,12 +152,13 @@ async def scene_to_prompt_googleaistudio(scene: SceneContent):
                             "5. Format output as comma-separated short phrases of no more than three words, e.g. long black hair, blue eyes, long legs, etc.\n"
                             "6. Choose appropriate camera angle for the image (e.g., wide shot, full body shot, close-up).\n"
                             "7. Select the appropriate image format from either landscape or portrait.\n"
+                            "8. Write the output in English only.\n"
                             "\n"
                             "Required format of the output (do not attach anything else):\n"
                             "Character Appearance: [physical characteristics, facial expression, clothing, pose],\n"
                             "Environment: [location details, lighting, atmosphere, objects],\n"
                             "[angle, shot],\n"
-                            "Format: landscape/portrait"
+                            "Format: landscape/portrait\n"
                         )
                     }
                 ]

@@ -6,7 +6,6 @@
   import { get_prompt_with_prefix, highlightQuotes } from '../lib/util'
   import { StoryEntryState } from '../types/story'
   import ImageOrSpinner from './ImageOrSpinner.svelte'
-  import Spinner from './Spinner.svelte'
   import { settings } from '../lib/settings.svelte'
   import { g_state } from '../lib/state.svelte'
   import Handlebars from 'handlebars'
@@ -152,6 +151,9 @@
 
   function process_thinking(content: string) {
     const thinking_regex = /<think>(.+?)$/s
+    const response_regex = /<h1>Response(.+?)Chapter[^<]+<\/h3>/s
+
+    content = content.replace(response_regex, '')
 
     const { matched, match_content, rest } = match_and_rest(think_complete_regex, content)
     if (matched) {
@@ -244,7 +246,7 @@
     margin: 1rem 0;
     white-space: normal;
     overflow: auto;
-    font-family: 'Segoe UI', Georgia, 'Times New Roman', Times, serif;
+    font-family: 'Noto Serif KR', 'Segoe UI', Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
     font-size: 1.1rem;
     color: theme('colors.neutral.600');
     padding: 0 0.5rem;
@@ -252,6 +254,13 @@
 
   .story-scene :global p {
     margin-block-end: 0.7rem;
+  }
+
+  .story-scene :global p em {
+    color: var(--color-neutral-400);
+    font-synthesis: none;
+    transform: skew(-8deg);
+    display: inline-block;
   }
 
   .story-scene :global .quoted-text {

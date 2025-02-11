@@ -1,13 +1,18 @@
 import json
 import pathlib
+import os
 from fastapi import APIRouter, HTTPException
 
 router = APIRouter()
 settings = None
 
 
-def get_data_path(subpath):
-    return str(pathlib.Path(__file__).parent.parent / "data" / subpath)
+def get_data_path(*subpaths):
+    return os.path.join(str(pathlib.Path(__file__).parent.parent / "data"), *subpaths)
+
+
+def get_preset_path(subpath):
+    return get_data_path("presets", subpath)
 
 
 def load_settings(reload=False):
@@ -40,20 +45,22 @@ def load_api_settings_for(api: str) -> dict:
 def load_preset():
     settings = load_settings()
     if settings["api_type"] == "infermaticai":
-        path = get_data_path(settings["infermaticai"]["preset"])
+        path = get_preset_path(settings["infermaticai"]["preset"])
     elif settings["api_type"] == "openai":
-        path = get_data_path(settings["openai"]["preset"])
+        path = get_preset_path(settings["openai"]["preset"])
     elif settings["api_type"] == "googleaistudio":
-        path = get_data_path(settings["googleaistudio"]["preset"])
+        path = get_preset_path(settings["googleaistudio"]["preset"])
     with open(path, "r") as f:
         return json.load(f)
 
 
 def load_preset_for(api: str) -> dict:
     if api == "infermaticai":
-        path = get_data_path(settings["infermaticai"]["preset"])
+        path = get_preset_path(settings["infermaticai"]["preset"])
     elif api == "openai":
-        path = get_data_path(settings["openai"]["preset"])
+        path = get_preset_path(settings["openai"]["preset"])
+    elif api == "googleaistudio":
+        path = get_preset_path(settings["googleaistudio"]["preset"])
     with open(path, "r") as f:
         return json.load(f)
 
@@ -61,7 +68,7 @@ def load_preset_for(api: str) -> dict:
 def load_instruct():
     settings = load_settings()
     if settings["api_type"] == "infermaticai":
-        path = get_data_path(settings["infermaticai"]["instruct"])
+        path = get_preset_path(settings["infermaticai"]["instruct"])
         with open(path, "r") as f:
             return json.load(f)
     return {}
@@ -70,7 +77,7 @@ def load_instruct():
 def load_context():
     settings = load_settings()
     if settings["api_type"] == "infermaticai":
-        path = get_data_path(settings["infermaticai"]["context"])
+        path = get_preset_path(settings["infermaticai"]["context"])
         with open(path, "r") as f:
             return json.load(f)
     return {}

@@ -1,9 +1,13 @@
 import random
 
 global_vars = {
-    "third_person": 1,
-    "protagonist": 1,
-    "enhance_depiction": 1,
+    "jailbreak": 1,
+    "toggle_duc": 1,
+    "toggle_cot": 1,
+    "toggle_han": 1,
+    "toggle_third_person_observant": 1,
+    "toggle_episode_display_removal": 1,
+    "toggle_summary_display_removal": 1,
 }
 
 
@@ -37,6 +41,18 @@ def parse_random(text: str, pos: int) -> tuple[str, int]:
     return "", pos
 
 
+def parse_roll(text: str, pos: int) -> tuple[str, int]:
+    if text[pos:].startswith("{{roll::"):
+        end = text.find("}}", pos)
+        if end == -1:
+            raise Exception("Invalid roll: expect }} got " + text[pos:])
+        value_str = text[pos + 8 : end]
+        max_value = int(value_str)
+        result = str(random.randint(1, max_value))
+        return result, end + 2
+    return "", pos
+
+
 def parse_var_expr(text: str, pos: int) -> tuple[int, int]:
     if text[pos:].startswith("{{getglobalvar::"):
         end = text.find("}}", pos)
@@ -49,6 +65,9 @@ def parse_var_expr(text: str, pos: int) -> tuple[int, int]:
         return 0, pos + 17
     elif text[pos:].startswith("{{random::"):
         value_str, pos = parse_random(text, pos)
+        return int(value_str), pos
+    elif text[pos:].startswith("{{roll::"):
+        value_str, pos = parse_roll(text, pos)
         return int(value_str), pos
     return parse_number(text, pos)
 
@@ -72,6 +91,10 @@ def parse_keyword(text: str, pos: int, values: dict) -> tuple[str, int]:
     raise Exception("Unknown keyword: " + text[pos:])
 
 
+def exception_context(error: str, text: str, pos: int):
+    return error + text[pos] + "\nContext:\n" + text[pos - 20 : pos + 20] + "\n" + " " * 20 + "^"
+
+
 def parse_term(text: str, pos: int) -> tuple[int, int]:
     if pos < len(text) and text[pos] == "(":
         pos = skip_whitespace(text, pos + 1)
@@ -80,7 +103,7 @@ def parse_term(text: str, pos: int) -> tuple[int, int]:
         if pos < len(text) and text[pos] == ")":
             return value, pos + 1
         else:
-            raise Exception("Invalid term: expect ) got " + text[pos])
+            raise Exception(exception_context("Invalid term: expect ) got ", text, pos))
     return parse_var_expr(text, pos)
 
 
@@ -122,12 +145,14 @@ def parse_expression(text: str, pos: int) -> tuple[int, int]:
     value, pos = parse_add_expr(text, pos)
     pos = skip_whitespace(text, pos)
 
-    while pos < len(text) and text[pos] in "=>":
+    while pos < len(text) and text[pos] in "=<>":
         op = text[pos]
         pos = skip_whitespace(text, pos + 1)
         right_value, pos = parse_term(text, pos)
 
-        if op == ">":
+        if op == "<":
+            value = int(value < right_value)
+        elif op == ">":
             value = int(value > right_value)
         elif op == "=":
             value = int(value == right_value)

@@ -1,10 +1,10 @@
 from pybars import Compiler
 
 
-def compile_prompt(text: str, user: str, char: str) -> str:
+def compile_prompt(text: str, user: str, char: str, slot: str = "") -> str:
     compiler = Compiler()
     template = compiler.compile(text)
-    template_data = {"user": user, "char": char}
+    template_data = {"user": user, "char": char, "slot": slot}
     result = template(template_data)
     return result
 
@@ -17,8 +17,7 @@ def find_prompt(prompts: list, id: str, user, char) -> str:
 
 
 def append(messages: list, role: str, content: str, user, char):
-    messages.append(
-        {"role": role, "content": compile_prompt(content, user, char)})
+    messages.append({"role": role, "content": compile_prompt(content, user, char)})
 
 
 def make_openai_prompt(
@@ -35,16 +34,14 @@ def make_openai_prompt(
     start_index: int,
     preset: dict,
 ) -> list:
-
     messages = []
     prompts = preset["prompts"]
     prompt_order = preset["prompt_order"][1]["order"]
 
     for order in prompt_order:
         if order["enabled"]:
-            if (order["identifier"] == "main" or order["identifier"] == "nsfw" or order["identifier"] == "jailbreak"):
-                role, content = find_prompt(
-                    prompts, order["identifier"], user, char)
+            if order["identifier"] == "main" or order["identifier"] == "nsfw" or order["identifier"] == "jailbreak":
+                role, content = find_prompt(prompts, order["identifier"], user, char)
                 append(messages, role, content, user, char)
             elif order["identifier"] == "worldInfoBefore" and wiBefore != "":
                 append(messages, "system", wiBefore, user, char)

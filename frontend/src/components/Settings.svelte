@@ -1,14 +1,16 @@
 <script lang="ts">
   import { settings, load_settings, save_settings } from '../lib/settings.svelte'
   import { onMount } from 'svelte'
-  import { Button, Input, uiHelpers } from 'svelte-5-ui-lib'
-  import { get_checkpoints } from '../lib/files.svelte'
+  import { Button, Input, Select, uiHelpers } from 'svelte-5-ui-lib'
+  import { get_checkpoints, get_data_dir, get_dir_entries } from '../lib/files.svelte'
   import type { ApiType } from '../lib/settings.svelte'
   import FileDialog from './FileDialog.svelte'
+  import type { Entry } from '@/types/file'
 
   let language_models: string[] = $state([])
   let checkpoints: string[] = $state([])
   let select_dialog = uiHelpers()
+  let presets: { value: string; name: string }[] = $state([])
 
   $effect(() => {
     get_language_models(settings.api_type).then((models) => {
@@ -44,7 +46,11 @@
   }
 
   onMount(async () => {
-    await load_settings()
+    try {
+      await load_settings()
+    } catch (error) {
+      console.error('Error loading settings:', error)
+    }
     try {
       checkpoints = await get_checkpoints()
     } catch (error) {
@@ -55,6 +61,9 @@
     } catch (error) {
       console.error('Error fetching language models:', error)
     }
+    const data_dir = await get_data_dir()
+    const entries = await get_dir_entries(data_dir + '/presets')
+    presets = entries.entries.map((entry: Entry) => ({ value: entry.name, name: entry.name }))
   })
 </script>
 
@@ -77,11 +86,11 @@
         bind:value={settings.infermaticai.api_key}
       />
       <div class="label">Preset</div>
-      <Input class="focus:ring-2 ring-sky-500" bind:value={settings.infermaticai.preset} />
+      <Select items={presets} bind:value={settings.infermaticai.preset} />
       <div class="label">Instruct</div>
-      <Input class="focus:ring-2 ring-sky-500" bind:value={settings.infermaticai.instruct} />
+      <Select items={presets} bind:value={settings.infermaticai.instruct} />
       <div class="label">Context</div>
-      <Input class="focus:ring-2 ring-sky-500" bind:value={settings.infermaticai.context} />
+      <Select items={presets} bind:value={settings.infermaticai.context} />
       <div class="label">Language model</div>
       <div>
         <select bind:value={settings.infermaticai.model}>
@@ -107,7 +116,7 @@
         bind:value={settings.openai.api_key}
       />
       <div class="label">Preset</div>
-      <Input class="focus:ring-2 ring-sky-500" bind:value={settings.openai.preset} />
+      <Select items={presets} bind:value={settings.openai.preset} />
       <div class="label">Language model</div>
       <div>
         <select bind:value={settings.openai.model}>
@@ -131,7 +140,7 @@
         bind:value={settings.googleaistudio.api_key}
       />
       <div class="label">Preset</div>
-      <Input class="focus:ring-2 ring-sky-500" bind:value={settings.googleaistudio.preset} />
+      <Select items={presets} bind:value={settings.googleaistudio.preset} />
       <div class="label">Module</div>
       <Input class="focus:ring-2 ring-sky-500" bind:value={settings.googleaistudio.module} />
       <div class="label">Language model</div>
